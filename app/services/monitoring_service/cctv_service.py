@@ -3,9 +3,9 @@ import logging
 import time
 import cv2
 from concurrent.futures import ThreadPoolExecutor
-from services.face_extracter_service import FaceExtractkerService, _check_face_alignment
-from services.facial_expression_service import FacialExpressionService
-from services.tracked_data_service.tracked_data_service import TrackedDataService
+from services.module_services.face_extract_service import FaceExtractkerService, _check_face_alignment
+from services.module_services.facial_expression_service import FacialExpressionService
+from services.tracker_service.tracked_data_service import TrackedDataService
 import numpy as np
 from core.config import settings
 

@@ -2,7 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import cv2
 import base64
 import numpy as np
-from services.monitoring_service.cctv_service import camera_monitoring_service
+from app.services.monitoring_service.cctv_service import camera_monitoring_service
 import asyncio
 import logging
 
