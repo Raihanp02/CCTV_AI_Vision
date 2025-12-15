@@ -8,7 +8,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class FaceExtractkerService:
+class FaceExtractService:
     def __init__(self, tracker_service,max_boxes: int = 20):
         self.tracked_data_service = tracker_service
         self.face_detection = RetinaFaceDecoder(model_path="assets/models/det_10g.onnx")

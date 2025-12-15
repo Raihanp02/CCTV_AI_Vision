@@ -5,40 +5,68 @@ import cv2
 from concurrent.futures import ThreadPoolExecutor
 from services.module_services.face_extract_service import FaceExtractkerService, _check_face_alignment
 from services.module_services.facial_expression_service import FacialExpressionService
-from services.tracker_service.tracked_data_service import TrackedDataService
 import numpy as np
 from core.config import settings
 
-camera_monitoring_service = settings.CAMERA_MONITORING_SOURCES
-camera_width = settings.CAMERA_MONITORING_FRAME_WIDTH
-camera_height = settings.CAMERA_MONITORING_FRAME_HEIGHT
+import threading
 
-class CameraMonitoringService:
-    def __init__(self, camera_url=0):
+class CCTVService:
+    def __init__(self, camera_url):
         self.camera_url = camera_url
         self.cap = None
-        self.module = {
-            "face_extract_service": FaceExtractkerService(),
-            "facial_expression_service": FacialExpressionService()
-        }
+        self.running = False
+        self.lock = threading.Lock()
+        self.thread = None
+        self.latest_frame = None
 
-    async def start(self):
-        self.cap = cv2.VideoCapture(self.camera_url)
-        if not self.cap.isOpened():
-            logging.error(f"Failed to open camera stream: {self.camera_url}")
-            return
+    def start(self):
+        with self.lock:
+            if self.running:
+                return
 
-    async def stop(self):
-        try:
-            self._async_event.clear()
-            self._thread_pool.shutdown(wait=False)
-        except Exception:
-            logging.exception("Failed to stop camera monitoring")
+            self.cap = cv2.VideoCapture(self.camera_url)
+            if not self.cap.isOpened():
+                logging.error(f"Failed to open camera: {self.camera_url}")
+                return
 
-    async def _capture_frames(self, camera: dict):
-        success, frame = self.cap.read()
+            self.running = True
+            self.thread = threading.Thread(
+                target=self._capture_loop,
+                daemon=True
+            )
+            self.thread.start()
 
-        if success:
-            return frame
+    def stop(self):
+        with self.lock:
+            if not self.running:
+                return
 
-camera_monitoring_service = CameraMonitoringService()
+            self.running = False
+
+        if self.thread:
+            self.thread.join(timeout=2)
+
+        if self.cap:
+            self.cap.release()
+            self.cap = None
+
+        self.latest_frame = None
+        logging.info(f"CCTV stopped: {self.camera_url}")
+
+    def read(self):
+        """
+        Non-blocking read.
+        Returns latest frame or None.
+        """
+        return self.latest_frame
+
+    def _capture_loop(self):
+        while self.running:
+            ret, frame = self.cap.read()
+            if not ret:
+                logging.warning("Frame read failed")
+                break
+
+            self.latest_frame = frame
+
+        self.running = False

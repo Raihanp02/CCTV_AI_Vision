@@ -3,6 +3,19 @@ from datetime import datetime
 from pydantic import BaseModel, Field, Optional
 from typing import List, Dict
 
+"""
+example:
+{
+    1 : {
+        "tracked_id": 1,
+        "predictions": {
+            "gender": {"label": "male", "confidence": 0.93},
+            "expression": {"label": "happy", "confidence": 0.87}
+        }
+    }
+}
+"""
+
 class PredictionItem(BaseModel):
     label: str
     confidence: float
