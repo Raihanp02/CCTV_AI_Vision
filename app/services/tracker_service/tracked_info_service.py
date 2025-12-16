@@ -4,11 +4,15 @@ class TrackedInfoService:
     def __init__(self):
         self.tracked_data: Dict[int, any] = {}
 
-    def store_tracked_info(self, tracked_id: int, predictions):
-        self._safe_insert_limited(self.tracked_data, tracked_id, predictions, max_size=10)
+    def init_track_info(self, tracked_id):
+        data = {"tracked_id": tracked_id, "predictions": {"expression":{}, "gender":{}}}
+        self._safe_insert_limited(self.tracked_data, data, max_size=10)
     
     def get_tracked_info(self, person_id):
         return self.tracked_data.get(person_id, None)
+    
+    def update_prediction_info(self, id, prediction: dict, recognition_type: str):
+        self.tracked_data[id].get("predictions").get(recognition_type) = prediction
     
     def _safe_insert_limited(self, d, key, value, max_size):
         if key not in d and len(d) >= max_size:
