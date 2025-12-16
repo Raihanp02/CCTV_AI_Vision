@@ -4,7 +4,6 @@ from typing import Dict
 
 class FaceTrackerService:
     def __init__(self, module = SortTracker(max_age=30, min_hits=5, iou_threshold=0.1)):
-        self.tracked_data: Dict[int, any] = {}
         self.tracker = module
 
     def process_tracked_data(self, boxes, landmarks, scores):

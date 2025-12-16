@@ -1,12 +1,11 @@
-from .base_pipeline import FacePipeline
+from .base_pipeline import BaseFacePipeline
 
-class FacialExpressionPipeline:
-    def __init__(self, tracker, tracked_data, facial_expression):
-        super().__init__(tracker, tracked_data, facial_expression)
+class FacialExpressionPipeline(BaseFacePipeline):
+    name = "facial_expression"
+    def __init__(self, tracked_data, module):
+        super.__init__(tracked_data, module)
 
-    def process(self, frame):
-        boxes, landmarks, scores = self.tracker.detect(frame)
-        boxes, landmarks = self.tracker.process_tracked_data(boxes, landmarks, scores)
+    def process(self, boxes, landmarks, frame):
         face_info = self._preprocess(boxes, landmarks, frame)
         
         result = []
@@ -19,12 +18,13 @@ class FacialExpressionPipeline:
             track_status = data.get("tracked_status")
 
             if not data.get("expression_status"):
-                prediction = self.facial_expression._detect_with_onnx(frame)
+                prediction = self.module._detect_with_onnx(face)
                 if prediction:
                     if not track_status:
                         self.tracked_data.init_track_info(id)
                     self.tracked_data.update_prediction_info(prediction, "expression")
                     result.append({
+                        "type": self.name,
                         "bbox": bbox,
                         "id": id,
                         "label": prediction.get("label",""),
@@ -36,11 +36,11 @@ class FacialExpressionPipeline:
                 info = self.tracked_data.get_tracked_info(id)
                 prediction = info.get("predictions").get("expression")
                 result.append({
+                        "type":self.name,
                         "bbox": bbox,
                         "id": id,
                         "label": prediction.get("label",""),
                         "confidence": prediction.get("confidence","")
-
                     })
             
         return result

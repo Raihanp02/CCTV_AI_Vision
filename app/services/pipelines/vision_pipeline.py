@@ -4,14 +4,16 @@ from app.services.tracker_service.face_tracker_service import FaceTrackerService
 from app.services.monitoring_service.cctv_service import CCTVService
 from app.services.tracker_service.tracked_info_service import TrackedInfoService
 from .face_pipeline.facial_expression_pipeline import FacialExpressionPipeline
+from .face_pipeline.face_pipeline import FacePipeline
 from app.services.module_services.draw_services import DrawServices
 
 class VisionPipeline:
     def __init__(self, source: CCTVService):
         self.source = source
         self.running = False
-        self.facial_pipeline = FacialExpressionPipeline(tracker=FaceTrackerService(), tracked_data=TrackedInfoService(), facial_expression=FacialExpressionService())
         self.tracked_data = TrackedInfoService()
+        self.facial_pipeline = FacialExpressionPipeline(tracked_data=self.tracked_data, facial_expression=FacialExpressionService())
+        self.face_pipeline = FacePipeline(face_detection=FaceExtractService(), face_tracker=FaceTrackerService(), feature=[self.facial_pipeline])
         self.draw_service = DrawServices()
 
     def start(self):
@@ -28,7 +30,7 @@ class VisionPipeline:
             if frame is None:
                 continue
 
-            info = self.facial_pipeline.process(frame)
+            info = self.face_pipeline.process(frame)
             self.draw_service.draw_bbox(frame, info)
 
             result = {

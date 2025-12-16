@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 
-class FacePipeline:
-    def __init__(self, tracker, tracked_data, module):
-        self.tracker = tracker
+class BaseFacePipeline:
+    def __init__(self, module,tracked_data):
         self.tracked_data = tracked_data
         self.module = module
 
