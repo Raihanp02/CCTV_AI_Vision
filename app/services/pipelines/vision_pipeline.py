@@ -1,4 +1,4 @@
-from app.services.module_services.face_extract_service import FaceExtractService
+from app.services.module_services.face_detection_service import FaceDetectionService
 from app.services.module_services.facial_expression_service import FacialExpressionService
 from app.services.tracker_service.face_tracker_service import FaceTrackerService
 from app.services.monitoring_service.cctv_service import CCTVService
@@ -13,7 +13,7 @@ class VisionPipeline:
         self.running = False
         self.tracked_data = TrackedInfoService()
         self.facial_pipeline = FacialExpressionPipeline(tracked_data=self.tracked_data, facial_expression=FacialExpressionService())
-        self.face_pipeline = FacePipeline(face_detection=FaceExtractService(), face_tracker=FaceTrackerService(), feature=[self.facial_pipeline])
+        self.face_pipeline = FacePipeline(face_detection=FaceDetectionService(), face_tracker=FaceTrackerService(), feature=[self.facial_pipeline])
         self.draw_service = DrawServices()
 
     def start(self):
