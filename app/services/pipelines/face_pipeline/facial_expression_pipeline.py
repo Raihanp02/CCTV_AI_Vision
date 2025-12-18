@@ -24,12 +24,11 @@ class FacialExpressionPipeline(BaseFacePipeline):
                         self.tracked_data.init_track_info(id)
                     self.tracked_data.update_prediction_info(prediction, "expression")
                     result.append({
-                        "type": self.name,
+                        "detection_type": self.name,
                         "bbox": bbox,
                         "id": id,
                         "label": prediction.get("label",""),
                         "confidence": prediction.get("confidence","")
-
                     })
 
             else:

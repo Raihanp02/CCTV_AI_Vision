@@ -8,7 +8,7 @@ class LineCounter:
         self.going_out = 0
         self.lines = lines
 
-    def batch_crossing_line(self, tracked_objects, lines, w, h):
+    def batch_crossing_line(self, tracked_objects, w, h):
         results = []            
         for i, obj in enumerate(tracked_objects):
             bx1, by1, bx2, by2, obj_id, class_id, confidence_score = (
@@ -26,7 +26,7 @@ class LineCounter:
 
             status = None
             if obj_id in self.prev_centroids:
-                for line in lines:
+                for line in self.lines:
                     limits = line.to_absolute(w,h)
                     prev = self.prev_centroids[obj_id]
                     side_prev = self._side(prev, limits)
@@ -42,12 +42,7 @@ class LineCounter:
 
             results.append(
                 {
-                    "bbox": {
-                        "top": int(by1),
-                        "left": int(bx1),
-                        "bottom": int(by2),
-                        "right": int(bx2),
-                    },
+                    "bbox": [bx1, by1, bx2, by2],
                     "person_id": obj_id,
                     "type": status,
                     "confidence": confidence_score,
@@ -58,7 +53,7 @@ class LineCounter:
 
         return results
     
-    def single_crossing_line(self, tracked_object, lines, w, h):
+    def single_crossing_line(self, tracked_object, w, h):
         bx1, by1, bx2, by2, obj_id, class_id, confidence_score = (
                 int(tracked_object[0]),
                 int(tracked_object[1]),
@@ -72,9 +67,13 @@ class LineCounter:
         cx, cy = (bx1 + bx2) // 2, (by1 + by2) // 2
         curr_centroid = [cx, cy]
 
+        self._safe_insert_limited(
+            self.prev_centroids, obj_id, curr_centroid, max_size=100
+        )
+
         status = None
         if obj_id in self.prev_centroids:
-            for line in lines:
+            for line in self.lines:
                 limits = line.to_absolute(w,h)
                 prev = self.prev_centroids[obj_id]
                 side_prev = self._side(prev, limits)
@@ -83,10 +82,6 @@ class LineCounter:
                 status = self._crossing_direction(side_prev, side_curr, line)
                 if status:
                     return status
-
-        self._safe_insert_limited(
-            self.prev_centroids, obj_id, curr_centroid, max_size=100
-        )
         
     def _crossing_direction(self, side_prev, side_curr, line) -> str | None:
         if side_prev * side_curr >= 0:
