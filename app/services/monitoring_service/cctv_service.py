@@ -18,6 +18,7 @@ class CCTVService:
         self.lock = threading.Lock()
         self.thread = None
         self.latest_frame = None
+        self.frame_count = 0
 
     def start(self):
         with self.lock:
@@ -68,5 +69,6 @@ class CCTVService:
                 break
 
             self.latest_frame = frame
+            self.frame_count += 1
 
         self.running = False

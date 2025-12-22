@@ -1,7 +1,7 @@
 from .line_object import LineObject
 
 class LineCounter:
-    def __init__(self, lines):
+    def __init__(self, lines: LineObject):
         self.prev_centroids = {}
         self.total_count = []
         self.going_in = 0
@@ -97,6 +97,10 @@ class LineCounter:
             return "out" if forward else "in"
 
     def _side(self, p, limits):
+        """
+        Positive means right side of the line direction
+        Negative means left side of the line direction
+        """
         x1, y1, x2, y2 = limits
         return (x2 - x1) * (p[1] - y1) - (y2 - y1) * (p[0] - x1)
 
