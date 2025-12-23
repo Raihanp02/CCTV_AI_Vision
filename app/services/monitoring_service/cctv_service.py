@@ -3,8 +3,6 @@ import logging
 import time
 import cv2
 from concurrent.futures import ThreadPoolExecutor
-from app.services.module_services.face_detection_service import FaceDetectionService, _check_face_alignment
-from services.module_services.facial_expression_service import FacialExpressionService
 import numpy as np
 from core.config import settings
 
@@ -18,7 +16,6 @@ class CCTVService:
         self.lock = threading.Lock()
         self.thread = None
         self.latest_frame = None
-        self.frame_count = 0
 
     def start(self):
         with self.lock:
@@ -69,6 +66,5 @@ class CCTVService:
                 break
 
             self.latest_frame = frame
-            self.frame_count += 1
 
         self.running = False

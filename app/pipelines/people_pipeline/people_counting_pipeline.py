@@ -1,4 +1,4 @@
-from app.services.module_services.people_detection_service import PeopleDetectionService
+from app.services.module_services.detection_service.people_detection_service import PeopleDetectionService
 from app.services.module_services.counting_service.line_counter import LineCounter
 from app.services.module_services.counting_service.line_object import LineObject
 from sort.tracker import SortTracker
