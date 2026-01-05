@@ -10,8 +10,8 @@ import cv2
 import logging
 
 class CCTVService:
-    def __init__(self, camera_url, camera_id, max_buffer_size=8):
-        CCTVService.global_buffer = Queue(maxsize=max_buffer_size)
+    def __init__(self, camera_url, camera_id, buffer = Queue):
+        self.buffer = buffer
 
         self.camera_url = camera_url
         self.camera_id = camera_id
@@ -56,7 +56,7 @@ class CCTVService:
         Returns (camera_id, camera_url, frame_id, frame) or None.
         """
         try:
-            return CCTVService.global_buffer.get_nowait()
+            return list(CCTVService.global_buffer.queue)
         except Empty:
             return None
 

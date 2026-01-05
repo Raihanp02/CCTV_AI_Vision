@@ -1,9 +1,4 @@
-from app.services.module_services.detection_service.face_detection_service import FaceDetectionService
-from app.services.module_services.detection_service.facial_expression_service import FacialExpressionService
-from app.services.module_services.tracker_service.face_tracker_service import FaceTrackerService
 from app.services.monitoring_service.cctv_service import CCTVService
-from app.services.module_services.tracker_service.tracked_info_service import TrackedInfoService
-from .face_pipeline.facial_expression_pipeline import FacialExpressionPipeline
 from .face_pipeline.face_pipeline import FacePipeline
 from .people_pipeline.people_counting_pipeline import PeopleCountingPipeline
 from app.services.module_services.draw_services import DrawServices
@@ -25,7 +20,9 @@ class VisionPipeline:
         self.draw_service = draw_service
 
         # frame information buffer
-        self.vision_buffer = Queue(maxsize=self.source[0].max_buffer_size)
+        self.frame_buffer = self.source[0].buffer
+        self.batch_size = self.source[0].max_buffer_size
+        self.vision_buffer = Queue(maxsize=self.batch_size)
 
     def start(self):
         self.running = True
@@ -39,24 +36,31 @@ class VisionPipeline:
 
     def run(self):
         while self.running:
-            frame_info = self.source.read()
-            if frame_info is None:
-                continue
-            
-            frame = frame_info.get("frame")
-            info = self.face_pipeline.process(frame)
-            self.draw_service.draw_bbox(frame, info)
+            if self.frame_buffer.qsize() >= self.batch_size:
+                frame_info = self._drain_queue(self.frame_buffer)
 
-            result = {
-                "information": info,
-                "frame": frame,
-                "frame_id": frame_info.get("frame_id"),
-                "camera_id": frame_info.get("camera_id"),
-                "camera_url": frame_info.get("camera_url")
-            }
+                if frame_info:
+                    info = self.face_pipeline.process(frame_info)
+                    self.draw_service.draw_bbox(frame_info.get("frame"), info)
 
-            self.vision_buffer.put(result)
+                    result = {
+                        "information": info,
+                        "frame": frame_info.get("frame"),
+                        "frame_id": frame_info.get("frame_id"),
+                        "camera_id": frame_info.get("camera_id"),
+                        "camera_url": frame_info.get("camera_url")
+                    }
 
-            
+                    self.vision_buffer.put(result)
 
+    def _drain_queue(self, q):
+        with q.mutex:
+            items = list(q.queue)
+            if items:
+                q.queue.clear()
 
+                # maintain Queue invariants
+                q.unfinished_tasks = 0
+                q.all_tasks_done.notify_all()
+
+        return items
