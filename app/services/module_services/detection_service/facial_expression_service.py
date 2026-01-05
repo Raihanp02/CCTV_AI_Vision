@@ -49,7 +49,7 @@ class FacialExpressionService:
                 self.model_path
             )
 
-    def detect(self, frame: np.ndarray) -> Dict[str, Any]:
+    def detect(self, frame: list[np.ndarray]) -> Dict[str, Any]:
         """
         Detect expression using ONNX Runtime.
 
@@ -63,49 +63,49 @@ class FacialExpressionService:
 
             input_tensor = self._preprocess(frame)
 
-            scores = self.ort_session.run(None, {"input": input_tensor})[0][0]
+            scores = self.ort_session.run(None, {"input": input_tensor})[0]
 
-            dominant_idx = np.argmax(scores)
-            dominant_emotion = HSEMOTION_EMOTIONS[dominant_idx]
+            result = []
+            for score in scores:
+                dominant_idx = np.argmax(score)
+                dominant_emotion = HSEMOTION_EMOTIONS[dominant_idx]
 
-            exp_scores = np.exp(scores - np.max(scores))
-            probabilities = exp_scores / exp_scores.sum()
+                exp_score = np.exp(score - np.max(score))
+                probabilities = exp_score / exp_score.sum()
 
-            confidence = float(probabilities[dominant_idx])
+                confidence = float(probabilities[dominant_idx])
 
-            if confidence <= 0.4:
-                return None
-            
-            result_dict = {
-                "label": dominant_emotion,
-                "confidence": round(confidence, 4),
-            }
+                if confidence <= 0.4:
+                    return None
+                
+                result.append({
+                    "label": dominant_emotion,
+                    "confidence": round(confidence, 4),
+                })
 
-            return result_dict
+            return result
 
         except Exception as e:
             print(f"ONNX detection error: {e}")
 
-    def _preprocess(self, frame: np.ndarray) -> np.ndarray:
+    def _preprocess(self, frames: list[np.ndarray]) -> np.ndarray:
         """
-        Preprocess face image for ONNX model.
-
-        Args:
-            face_image: Face image (BGR format from OpenCV)
-
-        Returns:
-            Preprocessed image ready for ONNX inference
+        frames: list[np.ndarray]  # BGR images
+        mean, std: list or tuple of length 3 (RGB)
         """
 
-        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Create blob (N, C, H, W)
+        blob = cv2.dnn.blobFromImages(
+            frames,
+            scalefactor=1.0 / 255.0,
+            size=(self.img_size, self.img_size),
+            mean=self.mean,          # subtract mean
+            swapRB=True,        # BGR -> RGB
+            crop=False
+        ).astype(np.float32)
 
-        resized = cv2.resize(rgb_image, (self.img_size, self.img_size))
+        # Divide by std (broadcasted)
+        for c in range(3):
+            blob[:, c, :, :] /= self.std[c]
 
-        normalized = resized.astype(np.float32) / 255.0
-
-        for i in range(3):
-            normalized[..., i] = (normalized[..., i] - self.mean[i]) / self.std[i]
-
-        preprocessed = normalized.transpose(2, 0, 1).astype(np.float32)[np.newaxis, ...]
-
-        return preprocessed
+        return blob

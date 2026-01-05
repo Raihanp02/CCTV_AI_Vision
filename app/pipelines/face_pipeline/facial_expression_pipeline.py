@@ -1,11 +1,12 @@
 from .base_pipeline import BaseFacePipeline
+import numpy as np
 
 class FacialExpressionPipeline(BaseFacePipeline):
     name = "facial_expression"
     def __init__(self, tracked_data, module):
         super.__init__(tracked_data, module)
 
-    def process(self, boxes, landmarks, frame):
+    def process(self, boxes, landmarks, frame: list[np.ndarray]):
         face_info = self._preprocess(boxes, landmarks, frame)
         
         result = []
@@ -44,7 +45,7 @@ class FacialExpressionPipeline(BaseFacePipeline):
             
         return result
 
-    def _preprocess(self, boxes, landmarks, frame):
+    def _preprocess(self, boxes, landmarks, frame: list[np.ndarray]):
         tracked_results = []
         for box, lmks in zip(boxes, landmarks):
             x1, y1, x2, y2, obj_id, class_id, confidence_score = box

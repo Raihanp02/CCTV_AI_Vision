@@ -1,8 +1,6 @@
-from sort.tracker import SortTracker
-import numpy as np
 import numpy as np
 import onnxruntime as ort
-from typing import Tuple, List
+from typing import Tuple
 import cv2
 import logging
 
@@ -14,30 +12,35 @@ class FaceDetectionService:
         self.face_detection = RetinaFaceDecoder(model_path="assets/models/det_10g.onnx")
         providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 
-    def detect(self, frame, min_area: float = 0.03):
-        boxes, landmarks, scores = self.face_detection.detect(
-            frame, 
-            conf_threshold=0.5,
-            check_alignment=False,
-            max_roll_angle=15.0,      # Maximum head tilt in degrees
-            max_yaw_ratio=0.15,       # Maximum left-right rotation (0-1)
-            max_pitch_ratio=0.2       # Maximum up-down rotation (0-1)
-        )
+    def detect(self, frames: list[np.ndarray], min_area: float = 0.03):
+        filtered_boxes = []
+        filtered_lmks = []
+        filtered_scores = []
 
-        valid_indices = []
+        for frame in frames:
+            boxes, landmarks, scores = self.face_detection.detect(
+                frame, 
+                conf_threshold=0.5,
+                check_alignment=False,
+                max_roll_angle=15.0,      # Maximum head tilt in degrees
+                max_yaw_ratio=0.15,       # Maximum left-right rotation (0-1)
+                max_pitch_ratio=0.2       # Maximum up-down rotation (0-1)
+            )
 
-        for idx, (box, lmks, score) in enumerate(zip(boxes, landmarks, scores)):
+            valid_indices = []
 
-            x1, y1, x2, y2 = box.astype(int)
-            area = (x2 - x1) * (y2 - y1)
+            for idx, (box, lmks, score) in enumerate(zip(boxes, landmarks, scores)):
 
-            if area / (frame.shape[0] * frame.shape[1]) > min_area:
-                valid_indices.append(idx)
+                x1, y1, x2, y2 = box.astype(int)
+                area = (x2 - x1) * (y2 - y1)
 
-        # Now slice ONLY ONCE
-        filtered_boxes = boxes[valid_indices]
-        filtered_lmks = landmarks[valid_indices]
-        filtered_scores = scores[valid_indices]
+                if area / (frame.shape[0] * frame.shape[1]) > min_area:
+                    valid_indices.append(idx)
+
+            # Now slice ONLY ONCE
+            filtered_boxes.append(boxes[valid_indices])
+            filtered_lmks.append(landmarks[valid_indices])
+            filtered_scores.append(scores[valid_indices])
 
         return filtered_boxes, filtered_lmks, filtered_scores
     
