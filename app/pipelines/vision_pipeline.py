@@ -10,17 +10,19 @@ from app.services.module_services.draw_services import DrawServices
 from queue import Queue
 
 class VisionPipeline:
-    def __init__(self, source: list[CCTVService]):
+    def __init__(self, 
+                 source: list[CCTVService],
+                 face_pipeline: FacePipeline,
+                 people_counting_pipeline: PeopleCountingPipeline,
+                 draw_service: DrawServices,):
         # cctv & run control
         self.source = source
         self.running = False
 
         # services & pipelines
-        self.tracked_data = TrackedInfoService()
-        self.facial_expression_pipeline = FacialExpressionPipeline(tracked_data=self.tracked_data, facial_expression=FacialExpressionService())
-        self.face_pipeline = FacePipeline(face_detection=FaceDetectionService(), face_tracker=FaceTrackerService(), feature=[self.facial_expression_pipeline])
-        self.people_counting_pipeline = PeopleCountingPipeline()
-        self.draw_service = DrawServices()
+        self.face_pipeline = face_pipeline
+        self.people_counting_pipeline = people_counting_pipeline
+        self.draw_service = draw_service
 
         # frame information buffer
         self.vision_buffer = Queue(maxsize=self.source[0].max_buffer_size)
