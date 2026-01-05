@@ -18,7 +18,7 @@ class FacialExpressionPipeline(BaseFacePipeline):
             track_status = data.get("tracked_status")
 
             if not data.get("expression_status"):
-                prediction = self.module._detect_with_onnx(face)
+                prediction = self.module.detect(face)
                 if prediction:
                     if not track_status:
                         self.tracked_data.init_track_info(id)
