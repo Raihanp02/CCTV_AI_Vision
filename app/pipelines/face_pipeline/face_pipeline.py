@@ -1,9 +1,9 @@
-from .base_pipeline import BaseFacePipeline
+from ..base_pipeline import BasePipeline
 from app.services.module_services.tracker_service.trackerpool import TrackingPool
 import numpy as np
 
-class FacePipeline:
-    def __init__(self, face_detection, face_tracker: list[TrackingPool], feature: list[BaseFacePipeline], num_camera: int):
+class FacePipeline(BasePipeline):
+    def __init__(self, face_detection, face_tracker: list[TrackingPool], feature: list[BasePipeline], num_camera: int):
         self.face_detection = face_detection
         self.face_tracker = face_tracker
         self.feature = feature

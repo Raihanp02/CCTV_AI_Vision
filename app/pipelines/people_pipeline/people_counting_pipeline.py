@@ -2,8 +2,9 @@ from app.services.module_services.detection_service.people_detection_service imp
 from app.services.module_services.counting_service.line_counter import LineCounter
 from app.services.module_services.counting_service.line_object import LineObject
 from sort.tracker import SortTracker
+from app.pipelines.base_pipeline import BasePipeline
 
-class PeopleCountingPipeline:
+class PeopleCountingPipeline(BasePipeline):
     name="people_counting"
     def __init__(self):
         self.people_detection = PeopleDetectionService()

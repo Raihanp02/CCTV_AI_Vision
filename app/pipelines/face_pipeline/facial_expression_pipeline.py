@@ -1,10 +1,11 @@
-from .base_pipeline import BaseFacePipeline
+from ..base_pipeline import BasePipeline
 import numpy as np
 
-class FacialExpressionPipeline(BaseFacePipeline):
+class FacialExpressionPipeline(BasePipeline):
     name = "facial_expression"
     def __init__(self, tracked_data, module):
-        super.__init__(tracked_data, module)
+        self.tracked_data = tracked_data
+        self.module = module
 
     def process(self, boxes, landmarks, frame: list[np.ndarray]):
         face_info = self._preprocess(boxes, landmarks, frame)
