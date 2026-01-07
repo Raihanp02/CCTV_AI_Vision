@@ -5,6 +5,8 @@ import numpy as np
 import onnxruntime as ort
 from typing import Any, Dict, Optional
 from pathlib import Path
+from app.services.module_services.detection_service.base_detection import BaseDetection
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ HSEMOTION_EMOTIONS = {
 STANDARD_EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Neutral", "Sad", "Surprise"]
 
 
-class FacialExpressionService:
+class FacialExpressionService(BaseDetection):
     def __init__(
         self,
         model_path: Optional[str] = None,

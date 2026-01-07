@@ -3,10 +3,11 @@ import onnxruntime as ort
 from typing import Tuple
 import cv2
 import logging
+from app.services.module_services.detection_service.base_detection import BaseDetection
 
 logger = logging.getLogger(__name__)
 
-class FaceDetectionService:
+class FaceDetectionService(BaseDetection):
     def __init__(self, tracker_service,max_boxes: int = 20):
         self.tracked_data_service = tracker_service
         self.face_detection = RetinaFaceDecoder(model_path="assets/models/det_10g.onnx")
