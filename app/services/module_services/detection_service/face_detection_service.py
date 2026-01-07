@@ -13,7 +13,7 @@ class FaceDetectionService(BaseDetection):
         self.face_detection = RetinaFaceDecoder(model_path="assets/models/det_10g.onnx")
         providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 
-    def detect(self, frames: list[np.ndarray], min_area: float = 0.03):
+    def detect(self, frames: list[np.ndarray], min_area: float = 0.03) -> dict[str, list[np.ndarray]]:
         filtered_boxes = []
         filtered_lmks = []
         filtered_scores = []
@@ -43,7 +43,7 @@ class FaceDetectionService(BaseDetection):
             filtered_lmks.append(landmarks[valid_indices])
             filtered_scores.append(scores[valid_indices])
 
-        return filtered_boxes, filtered_lmks, filtered_scores
+        return {"boxes": filtered_boxes, "landmarks": filtered_lmks, "scores": filtered_scores}
     
     def face_check(self, face_embed):
         with self.shared_lock:
