@@ -1,22 +1,20 @@
 from app.services.monitoring_service.cctv_service import CCTVService
-from .face_pipeline.face_pipeline import FacePipeline
-from .people_pipeline.people_counting_pipeline import PeopleCountingPipeline
+from .base_pipeline import BasePipeline
 from app.services.module_services.draw_services import DrawServices
 from queue import Queue
+from collections import defaultdict 
 
 class VisionPipeline:
     def __init__(self, 
                  source: list[CCTVService],
-                 face_pipeline: FacePipeline,
-                 people_counting_pipeline: PeopleCountingPipeline,
+                 pipelines: list[BasePipeline],
                  draw_service: DrawServices,):
         # cctv & run control
         self.source = source
         self.running = False
 
         # services & pipelines
-        self.face_pipeline = face_pipeline
-        self.people_counting_pipeline = people_counting_pipeline
+        self.pipelines = pipelines
         self.draw_service = draw_service
 
         # frame information buffer
@@ -40,7 +38,11 @@ class VisionPipeline:
                 frame_info = self._drain_queue(self.frame_buffer)
 
                 if frame_info:
-                    info = self.face_pipeline.process(frame_info)
+                    frame_info = self._restructure_frame(frame_info)
+                    
+                    for pipeline in self.pipelines:
+                        info = pipeline.process(frame_info)
+                    
                     self.draw_service.draw_bbox(frame_info.get("frame"), info)
 
                     result = {
@@ -64,3 +66,16 @@ class VisionPipeline:
                 q.all_tasks_done.notify_all()
 
         return items
+    
+    def _restructure_frame(self, frame_info_list: list[dict]):
+        grouped = defaultdict(lambda: {
+            "frame": [],
+            "frame_id": []
+        })
+
+        for item in frame_info_list:
+            cam_id = item["camera_id"]
+            grouped[cam_id]["frame"].append(item["frame"])
+            grouped[cam_id]["frame_id"].append(item["frame_id"])
+
+        return grouped
