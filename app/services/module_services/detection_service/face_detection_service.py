@@ -14,11 +14,12 @@ class FaceDetectionService(BaseDetection):
         providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 
     def detect(self, frames: list[np.ndarray], min_area: float = 0.03) -> dict[str, list[np.ndarray]]:
-        filtered_boxes = []
-        filtered_lmks = []
-        filtered_scores = []
+        detections = []
 
         for frame in frames:
+            filtered_boxes = []
+            filtered_lmks = []
+            filtered_scores = []
             boxes, landmarks, scores = self.face_detection.detect(
                 frame, 
                 conf_threshold=0.5,
@@ -39,11 +40,13 @@ class FaceDetectionService(BaseDetection):
                     valid_indices.append(idx)
 
             # Now slice ONLY ONCE
-            filtered_boxes.append(boxes[valid_indices])
-            filtered_lmks.append(landmarks[valid_indices])
-            filtered_scores.append(scores[valid_indices])
+            detections.append({
+                "boxes": boxes[valid_indices],
+                "landmarks": landmarks[valid_indices],
+                "scores": scores[valid_indices]
+            })
 
-        return {"boxes": filtered_boxes, "landmarks": filtered_lmks, "scores": filtered_scores}
+        return detections
     
     def face_check(self, face_embed):
         with self.shared_lock:
