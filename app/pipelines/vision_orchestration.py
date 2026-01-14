@@ -3,12 +3,14 @@ from .base_pipeline import BasePipeline
 from app.services.module_services.draw_services import DrawServices
 from queue import Queue
 from collections import defaultdict 
+from .executor_strategy import ThreadExecutorStrategy
 
 class VisionPipeline:
     def __init__(self, 
                  source: list[CCTVService],
                  pipelines: list[BasePipeline],
-                 draw_service: DrawServices,):
+                 draw_service: DrawServices,
+                 executor_strategy=ThreadExecutorStrategy()):
         # cctv & run control
         self.source = source
         self.running = False
@@ -16,6 +18,7 @@ class VisionPipeline:
         # services & pipelines
         self.pipelines = pipelines
         self.draw_service = draw_service
+        self.executor_strategy = executor_strategy
 
         # frame information buffer
         self.frame_buffer = self.source[0].buffer
@@ -40,20 +43,16 @@ class VisionPipeline:
                 if frame_info:
                     frame_info = self._restructure_frame(frame_info)
                     
-                    for pipeline in self.pipelines:
-                        info = pipeline.process(frame_info)
+                    results = self.executor_strategy.execute(self.pipelines, frame_info)
                     
-                    self.draw_service.draw_bbox(frame_info.get("frame"), info)
+                    self.draw_service.draw_bbox(frame_info)
 
-                    result = {
-                        "information": info,
-                        "frame": frame_info.get("frame"),
-                        "frame_id": frame_info.get("frame_id"),
-                        "camera_id": frame_info.get("camera_id"),
-                        "camera_url": frame_info.get("camera_url")
-                    }
+                    #merge results back to frame_info
+                    for items in results:
+                        for key, value in items.items():
+                            frame_info.setdefault(key, {}).update(value)
 
-                    self.vision_buffer.put(result)
+                    self.vision_buffer.put(frame_info)
 
     def _drain_queue(self, q):
         with q.mutex:
@@ -70,7 +69,7 @@ class VisionPipeline:
     def _restructure_frame(self, frame_info_list: list[dict]):
         grouped = defaultdict(lambda: {
             "frame": [],
-            "frame_id": []
+            "frame_id": [],
         })
 
         for item in frame_info_list:
