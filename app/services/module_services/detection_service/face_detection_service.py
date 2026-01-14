@@ -13,7 +13,7 @@ class FaceDetectionService(BaseDetection):
         self.face_detection = RetinaFaceDecoder(model_path="assets/models/det_10g.onnx")
         providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 
-    def detect(self, frames: list[np.ndarray], min_area: float = 0.03) -> dict[str, list[np.ndarray]]:
+    def detect(self, frames: list[np.ndarray], min_area: float = 0.03) -> list[dict[str, list[np.ndarray]]]:
         detections = []
 
         for frame in frames:

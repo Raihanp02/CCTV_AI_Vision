@@ -10,7 +10,7 @@ example:
         "tracked_id": 1,
         "predictions": {
             "gender": {"label": "male", "confidence": 0.93},
-            "expression": {"label": "happy", "confidence": 0.87}
+            "facial_expression": {"label": "happy", "confidence": 0.87}
         }
     }
 }
@@ -22,7 +22,7 @@ class PredictionItem(BaseModel):
 
 class Predictions(BaseModel):
     gender: Optional[PredictionItem] = None
-    expression: Optional[PredictionItem] = None
+    facial_expression: Optional[PredictionItem] = None
 
 class TrackedDataSchema(BaseModel):
     tracked_id: int = Field(..., description="Unique identifier for the tracked data")
