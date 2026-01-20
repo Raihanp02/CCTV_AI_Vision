@@ -10,7 +10,7 @@ class FaceTrackerPipeline(BaseTrackerPipeline):
 
             detections = value["detections"]
             for detection in detections:
-                result = self.tracker_module[key].process_tracked_data(
+                result = self.tracker_modules[key].process_tracked_data(
                     detection["boxes"],
                     detection["landmarks"],
                     detection["scores"]

@@ -5,11 +5,24 @@ class DrawServices:
         self.thickness = thickness
         self.size = size
 
-    def draw_bbox(self, frame, info_bbox):
-        for info in info_bbox:
-            x1,y1,x2,y2 = info["bbox"]
-            label = info.get("label", "")
-            confidence = info.get("confidence", "")
-            id = info.get("id", "")
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), self.thickness)
-            cv2.putText(frame, f"{label} ({confidence})", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, self.size, (0, 255, 0), self.thickness)
+    def process(self, frame_info):
+        for key, info in frame_info.items():
+            for frame, results in zip(info["frame"], (item for item in info["result"].values())):
+                for result in results:
+                    x1,y1,x2,y2 = result["bbox"]
+                    label = ""
+                    for result_label in result.get("detections").values():
+                        label += f"{result_label.get('label','')}, "
+
+                    self.draw_bbox(frame, {
+                        "bbox": [x1, y1, x2, y2],
+                        "label": label,
+                    })
+                
+    def draw_bbox(self, frame, info):
+        x1,y1,x2,y2 = info["bbox"]
+        label = info.get("label", "")
+        confidence = info.get("confidence", "")
+        id = info.get("id", "")
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), self.thickness)
+        cv2.putText(frame, f"{label} ({confidence})", (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, self.size, (0, 255, 0), self.thickness)

@@ -8,8 +8,7 @@ from app.services.module_services.detection_service.base_detection import BaseDe
 logger = logging.getLogger(__name__)
 
 class FaceDetectionService(BaseDetection):
-    def __init__(self, tracker_service,max_boxes: int = 20):
-        self.tracked_data_service = tracker_service
+    def __init__(self):
         self.face_detection = RetinaFaceDecoder(model_path="assets/models/det_10g.onnx")
         providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 

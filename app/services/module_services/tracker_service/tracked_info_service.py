@@ -12,7 +12,7 @@ class TrackedInfoService:
         return self.tracked_data.get(person_id, None)
     
     def update_prediction_info(self, id, prediction: dict, recognition_type: str):
-        self.tracked_data[id].get("predictions").get(recognition_type) = prediction
+        self.tracked_data[id]["predictions"][recognition_type] = prediction
     
     def _safe_insert_limited(self, d, key, value, max_size):
         if key not in d and len(d) >= max_size:

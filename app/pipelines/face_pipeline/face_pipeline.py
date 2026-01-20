@@ -86,13 +86,14 @@ class FacePipeline(BasePipeline):
                 temp = {
                     "bbox": bbox,
                     "id": id,
+                    "detections": {}
                 }
 
                 for name in self.module_name:
                     tracked_data = self.tracked_data[cam_id].get_tracked_info(id)
                     prediction = tracked_data[cam_id].get("predictions").get(name)
 
-                    temp[name] = prediction if prediction else None
+                    temp["detections"][name] = prediction if prediction else None
 
                 result[cam_id][FacePipeline.name].append(temp)
 

@@ -56,7 +56,7 @@ class CCTVService:
         Returns (camera_id, camera_url, frame_id, frame) or None.
         """
         try:
-            return list(CCTVService.global_buffer.queue)
+            return list(self.buffer.queue)
         except Empty:
             return None
 
@@ -68,7 +68,7 @@ class CCTVService:
                 break
 
             self.frame_id += 1
-            CCTVService.global_buffer.put({
+            self.buffer.put({
                 "camera_id":self.camera_id, 
                 "camera_url": self.camera_url, 
                 "frame_id": self.frame_id, 
