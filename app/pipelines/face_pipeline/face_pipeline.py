@@ -23,6 +23,7 @@ class FacePipeline(BasePipeline):
         detections = self.face_detection.detect(frame)
 
         split_detection = split_detection_results_columnar(detections, meta, "face_detections")
+        print(split_detection["cam_1"]["detections"]["face_detections"])
         self.tracker_pipeline.process_tracker(split_detection)
 
         for feature in self.features:
