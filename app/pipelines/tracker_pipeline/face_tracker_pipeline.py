@@ -5,15 +5,15 @@ class FaceTrackerPipeline(BaseTrackerPipeline):
         super().__init__(cam_id, tracker_module, tracked_data)
 
     def process_tracker(self, info):
-        for key, value in info.items():
+        for cam_id, value in info.items():
             temp_detection = []
 
-            detections = value["detections"]
-            for detection in detections:
-                result = self.tracker_modules[key].process_tracked_data(
-                    detection["boxes"],
-                    detection["landmarks"],
-                    detection["scores"]
+            detections = value["detections"]["face_detections"]
+            for boxes, landmarks, scores in zip(detections.get("boxes", []), detections.get("landmarks", []), detections.get("scores", [])):
+                result = self.tracker_modules[cam_id].process_tracked_data(
+                    boxes,
+                    landmarks,
+                    scores
                 )
 
                 temp_detection.append({

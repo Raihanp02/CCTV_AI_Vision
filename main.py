@@ -22,7 +22,8 @@ vision_pipeline = VisionPipeline(
     pipelines=[FacePipeline(
         face_detection=FaceDetectionService(),
         tracker_pipeline=FaceTrackerPipeline(cam_id=["cam_1"], tracker_module=FaceTrackerService, tracked_data=TrackedInfoService),
-        features=[FacialExpressionPipeline()],
+        features=[FacialExpressionPipeline],
+        face_module=[FacialExpressionService()]
     )],
     draw_service=DrawServices(),
 )

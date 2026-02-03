@@ -5,7 +5,7 @@ def merge_for_detection(by_camera):
     meta = []  # mapping back to camera & frame_id
 
     for cam_id, data in by_camera.items():
-        for frame, frame_id in zip(data["frames"], data["frame_ids"]):
+        for frame, frame_id in zip(data["frame"], data["frame_id"]):
             frames.append(frame)
             meta.append((cam_id, frame_id, frame))
 
@@ -15,10 +15,12 @@ def split_detection_results_columnar(detections, meta, detection_type: str):
     results = defaultdict(lambda: {
         "frame_id": [],
         "frame": [],
-        "detections": defaultdict(list)
+        "detections": defaultdict(defaultdict(list))
     })
 
-    for det, (cam_id, frame_id, frame) in zip(detections, meta):
+    keys = detections.keys()
+
+    for det, (cam_id, frame_id, frame) in zip(zip(detections.values()), meta):
         bucket = results[cam_id]
         bucket["frame_id"].append(frame_id)
         bucket["frame"].append(frame)

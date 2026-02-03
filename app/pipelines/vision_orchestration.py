@@ -22,7 +22,7 @@ class VisionPipeline:
 
         # frame information buffer
         self.frame_buffer = self.source[0].buffer
-        self.batch_size = self.source[0].max_buffer_size
+        self.batch_size = self.source[0].buffer.maxsize
         self.vision_buffer = Queue(maxsize=self.batch_size)
 
     def start(self):

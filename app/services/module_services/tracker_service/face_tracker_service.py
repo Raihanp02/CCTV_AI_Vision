@@ -10,10 +10,10 @@ class FaceTrackerService(BaseTrackerService):
     def process_tracked_data(self, boxes, landmarks, scores):
         if boxes.size: 
             detections = np.hstack([boxes, scores.reshape(-1,1), np.zeros((boxes.shape[0], 1), dtype=np.float32)])
-            boxes = self.tracker.update(detections, None)
+            boxes = self.module.update(detections, None)
 
         else:
-            boxes = self.tracker.update(np.array([]), None)
+            boxes = self.module.update(np.array([]), None)
             landmarks = np.array([])  # No landmarks when there are no boxes
             scores = np.array([])     # No scores when there are no boxes
 

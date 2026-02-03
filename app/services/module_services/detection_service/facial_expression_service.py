@@ -43,7 +43,7 @@ class FacialExpressionService(BaseDetection):
         self.std = [0.229, 0.224, 0.225]
 
         if model_path is None:
-            base_dir = Path(__file__).resolve().parent.parent
+            base_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
             model_path = base_dir / "assets/models" / "emotion.onnx"
 
         self.model_path = model_path

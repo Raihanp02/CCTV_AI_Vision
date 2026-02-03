@@ -27,7 +27,7 @@ class FacePipeline(BasePipeline):
 
         for feature in self.features:
             name = feature.name
-            self._preprocess(split_detection, name)
+            self._preprocess(split_detection)
             feature.process(split_detection)
 
         face_result = self._generate_face_result(split_detection)
@@ -66,7 +66,7 @@ class FacePipeline(BasePipeline):
                     information = existence.get("predictions", {}).get(name, None)
                     temp[name] = information if information else False
 
-                detections["facial_info"].append(temp)
+                face_detections.append(temp)
 
     def _generate_face_result(self, face_info):
         result = defaultdict(lambda: {
@@ -76,7 +76,7 @@ class FacePipeline(BasePipeline):
         for cam_id, value in face_info.items():
 
             detections = value.get("detections")
-            facial_info = detections.get("facial_info")
+            facial_info = detections.get("face_detections")
 
             for info in facial_info:
                 id = info.get("person_id")
