@@ -1,4 +1,4 @@
-from sort.tracker import SortTracker
+from libs.tracking.sort_tracker import SortTracker
 import numpy as np
 from typing import Dict
 from .base_tracker_service import BaseTrackerService
