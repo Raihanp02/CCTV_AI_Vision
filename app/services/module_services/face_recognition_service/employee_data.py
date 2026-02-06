@@ -17,8 +17,19 @@ class EmployeeData:
 
     def add_employee(self, employee_id, employee_data):
         with self.lock:
+            if not self.employee_repository.get(employee_id, False):
+                print("employee id already exist delete it if want to change")
+                return
             self.employee_repository[employee_id] = employee_data
             self.save_id_map()
+
+    def delete_employee(self, employee_id):
+        if self.employee_repository.get(employee_id, False):
+            del self.employee_repository[employee_id]
+        
+        else:
+            print("employee id doesnt exist")
+            return 
 
     def get_employee(self, employee_id):
         try:

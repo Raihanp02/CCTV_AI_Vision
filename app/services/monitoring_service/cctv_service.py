@@ -64,9 +64,10 @@ class CCTVService:
         while self.running:
             ret, frame = self.cap.read()
             if not ret:
+                print("frame read failed")
                 logging.warning("Frame read failed")
-                break
-
+                continue
+            
             self.frame_id += 1
             self.buffer.put({
                 "camera_id":self.camera_id, 

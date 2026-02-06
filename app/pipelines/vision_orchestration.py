@@ -1,7 +1,7 @@
 from app.services.monitoring_service.cctv_service import CCTVService
 from .base_pipeline import BasePipeline
 from app.services.module_services.draw_services import DrawServices
-from queue import Queue
+from queue import Queue, Empty
 from collections import defaultdict 
 from .executor_strategy import ThreadExecutorStrategy, Base
 
@@ -70,15 +70,12 @@ class VisionPipeline:
             self.running = False
     
     def _drain_queue(self, q):
-        with q.mutex:
-            items = list(q.queue)
-            if items:
-                q.queue.clear()
-
-                # maintain Queue invariants
-                q.unfinished_tasks = 0
-                q.all_tasks_done.notify_all()
-
+        items = []
+        while True:
+            try:
+                items.append(q.get_nowait())
+            except Empty:
+                break
         return items
     
     def _restructure_frame(self, frame_info_list: list[dict]):
