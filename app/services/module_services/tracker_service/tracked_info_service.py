@@ -6,7 +6,7 @@ class TrackedInfoService:
 
     def init_track_info(self, tracked_id):
         data = {"tracked_id": tracked_id, "predictions": {"expression":{}, "gender":{}}}
-        self._safe_insert_limited(self.tracked_data, data, max_size=10)
+        self._safe_insert_limited(self.tracked_data, tracked_id, data, max_size=10)
     
     def get_tracked_info(self, person_id):
         return self.tracked_data.get(person_id, None)

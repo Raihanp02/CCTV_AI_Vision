@@ -21,5 +21,4 @@ class FaceTrackerPipeline(BaseTrackerPipeline):
                     "landmarks": result["landmarks"],
                     "scores": result["scores"]
                 })
-
-            detections = temp_detection
+            value["detections"]["face_detections"] = temp_detection

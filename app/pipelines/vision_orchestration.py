@@ -5,6 +5,9 @@ from queue import Queue
 from collections import defaultdict 
 from .executor_strategy import ThreadExecutorStrategy, Base
 
+import threading
+import traceback
+
 class VisionPipeline:
     def __init__(self, 
                  source: list[CCTVService],
@@ -29,7 +32,12 @@ class VisionPipeline:
         self.running = True
         for cctv in self.source:
             cctv.start()
-        self.run()
+
+        self.thread = threading.Thread(
+            target=self.run,
+            daemon=True
+        )
+        self.thread.start()
 
     def stop(self):
         self.running = False
@@ -37,23 +45,29 @@ class VisionPipeline:
             cctv.stop()
 
     def run(self):
-        while self.running:
-            if self.frame_buffer.qsize() >= self.batch_size:
-                frame_info = self._drain_queue(self.frame_buffer)
+        try:
+            while self.running:
+                if self.frame_buffer.qsize() >= self.batch_size:
+                    frame_info = self._drain_queue(self.frame_buffer)
 
-                if frame_info:
-                    frame_info = self._restructure_frame(frame_info)
-                    
-                    results = self.executor_strategy.execute(self.pipelines, frame_info)
+                    if frame_info:
+                        frame_info = self._restructure_frame(frame_info)
+                        
+                        results = self.executor_strategy.execute(self.pipelines, frame_info)
 
-                    #merge results back to frame_info
-                    self._merge_results(frame_info, results)
+                        #merge results back to frame_info
+                        self._merge_results(frame_info, results)
 
-                    # draw results
-                    self.draw_service.process(frame_info)
+                        # draw results
+                        self.draw_service.process(frame_info)
 
-                    # push to vision buffer
-                    self.vision_buffer.put(frame_info)
+                        # push to vision buffer
+                        self.vision_buffer.put(frame_info)
+
+        except Exception as e:
+            print("❌ VisionPipeline thread crashed:")
+            traceback.print_exc()
+            self.running = False
     
     def _drain_queue(self, q):
         with q.mutex:

@@ -15,18 +15,15 @@ def split_detection_results_columnar(detections, meta, detection_type: str):
     results = defaultdict(lambda: {
         "frame_id": [],
         "frame": [],
-        "detections": {}
+        "detections": defaultdict(lambda: defaultdict(list))
     })
 
-    keys = detections.keys()
-    temp = []
-
-    for det, (cam_id, frame_id, frame) in zip(zip(detections.values()), meta):
+    keys = list(detections.keys())
+    for det, (cam_id, frame_id, frame) in zip(zip(*detections.values()), meta):
         bucket = results[cam_id]
         bucket["frame_id"].append(frame_id)
         bucket["frame"].append(frame)
-        temp.append(det)
-        
-    bucket["detections"][detection_type] = temp
-
+        for k, key in enumerate(keys):
+            bucket["detections"][detection_type][key].append(det[k])
+    
     return results

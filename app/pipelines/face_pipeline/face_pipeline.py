@@ -23,7 +23,6 @@ class FacePipeline(BasePipeline):
         detections = self.face_detection.detect(frame)
 
         split_detection = split_detection_results_columnar(detections, meta, "face_detections")
-        print(split_detection["cam_1"]["detections"]["face_detections"])
         self.tracker_pipeline.process_tracker(split_detection)
 
         for feature in self.features:
@@ -35,39 +34,41 @@ class FacePipeline(BasePipeline):
         return face_result
     
     def _preprocess(self, info):
-
         for key, value in info.items():
             frames = value.get("frame")
             detections = value["detections"]
 
             face_detections = detections.get("face_detections")
-            boxes = face_detections.get("boxes")
-            landmarks = face_detections.get("landmarks")
 
             temp_results = []
-            for box, lmks, frame in zip(boxes, landmarks, frames):
-                x1, y1, x2, y2, obj_id, class_id, confidence_score = box
-                x1, y1, x2, y2, obj_id = int(x1), int(y1), int(x2), int(y2), int(obj_id)
 
-                face_crop = frame[y1:y2, x1:x2]
-                if face_crop.size == 0:
-                    continue
+            for face, frame in zip(face_detections, frames):
+                bbox = face.get("boxes")
+                for box in bbox:
+                    x1, y1, x2, y2, obj_id, class_id, confidence_score = box
+                    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                    face_crop = frame[y1:y2, x1:x2]
 
-                existence = self.tracked_data[key].get(obj_id, {})
+                    if face_crop.size == 0:
+                        continue
+                    
+                    existence = self.tracked_data[key].tracked_data.get(obj_id, {})
 
-                temp = {
-                    "person_id": int(obj_id),
-                    "bbox": [x1, y1, x2, y2],
-                    "landmarks" : lmks,
-                    "face_crop": face_crop,
-                    "confidence": float(confidence_score),
-                    "tracked_status": True if existence else False,
-                }
-                for name in self.module_name:
-                    information = existence.get("predictions", {}).get(name, None)
-                    temp[name] = information if information else False
+                    temp = {
+                        "person_id": int(obj_id),
+                        "bbox": [x1, y1, x2, y2],
+                        "landmarks" : face["landmarks"],
+                        "face_crop": face_crop,
+                        "confidence": float(confidence_score),
+                        "tracked_status": True if existence else False,
+                    }
+                    for name in self.module_name:
+                        information = existence.get("predictions", {}).get(name, None)
+                        temp[name] = information if information else False
 
-                face_detections.append(temp)
+                    temp_results.append(temp)
+
+                value["detections"]["facial_info"] = temp_results
 
     def _generate_face_result(self, face_info):
         result = defaultdict(lambda: {
@@ -77,7 +78,7 @@ class FacePipeline(BasePipeline):
         for cam_id, value in face_info.items():
 
             detections = value.get("detections")
-            facial_info = detections.get("face_detections")
+            facial_info = detections.get("facial_info")
 
             for info in facial_info:
                 id = info.get("person_id")
@@ -92,9 +93,10 @@ class FacePipeline(BasePipeline):
 
                 for name in self.module_name:
                     tracked_data = self.tracked_data[cam_id].get_tracked_info(id)
-                    prediction = tracked_data[cam_id].get("predictions").get(name)
-
-                    temp["detections"][name] = prediction if prediction else None
+                    if tracked_data:
+                        prediction = tracked_data.get("predictions", {}).get(name, "")
+                        if prediction:
+                            temp["detections"][name] = prediction if prediction else None
 
                 result[cam_id][FacePipeline.name].append(temp)
 

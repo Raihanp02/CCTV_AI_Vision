@@ -61,34 +61,30 @@ class FacialExpressionService(BaseDetection):
         Returns:
             Expression detection result
         """
-        try:
 
-            input_tensor = self._preprocess(frame)
+        input_tensor = self._preprocess(frame)
 
-            scores = self.ort_session.run(None, {"input": input_tensor})[0]
+        scores = self.ort_session.run(None, {"input": input_tensor})[0]
 
-            result = []
-            for score in scores:
-                dominant_idx = np.argmax(score)
-                dominant_emotion = HSEMOTION_EMOTIONS[dominant_idx]
+        result = []
+        for score in scores:
+            dominant_idx = np.argmax(score)
+            dominant_emotion = HSEMOTION_EMOTIONS[dominant_idx]
 
-                exp_score = np.exp(score - np.max(score))
-                probabilities = exp_score / exp_score.sum()
+            exp_score = np.exp(score - np.max(score))
+            probabilities = exp_score / exp_score.sum()
 
-                confidence = float(probabilities[dominant_idx])
+            confidence = float(probabilities[dominant_idx])
 
-                if confidence <= 0.4:
-                    return None
-                
-                result.append({
-                    "label": dominant_emotion,
-                    "confidence": round(confidence, 4),
-                })
+            if confidence <= 0.4:
+                continue
+            
+            result.append({
+                "label": dominant_emotion,
+                "confidence": round(confidence, 4),
+            })
 
-            return result
-
-        except Exception as e:
-            print(f"ONNX detection error: {e}")
+        return result
 
     def _preprocess(self, frames: list[np.ndarray]) -> np.ndarray:
         """

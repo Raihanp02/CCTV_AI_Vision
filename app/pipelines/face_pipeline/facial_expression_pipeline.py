@@ -25,15 +25,17 @@ class FacialExpressionPipeline(BasePipeline):
                     face_list.append(face)
                     id_list.append(id)
 
-            prediction = self.module.detect(face_list)
+            if face_list:
+                prediction = self.module.detect(face_list)
 
-            for index, predict in enumerate(prediction):
-                facial_info = facial_info[index]
-                track_status = facial_info.get("tracked_status")
-                if predict:
-                    if not track_status:
-                        self.tracked_data[cam_id].init_track_info(id_list[index])
-                    self.tracked_data[cam_id].update_prediction_info(predict, FacialExpressionPipeline.name)
+                for index, predict in enumerate(prediction):
+                    id = id_list[index]
+                    facial_info = facial_info[index]
+                    track_status = facial_info.get("tracked_status")
+                    if predict:
+                        if not track_status:
+                            self.tracked_data[cam_id].init_track_info(id)
+                        self.tracked_data[cam_id].update_prediction_info(id, predict, FacialExpressionPipeline.name)
 
     
             
