@@ -3,3 +3,5 @@ onnxruntime
 opencv-python
 pydantic-settings
 filterpy
+faiss-cpu
+ultralight
