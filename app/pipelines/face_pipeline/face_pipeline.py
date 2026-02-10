@@ -44,20 +44,20 @@ class FacePipeline(BasePipeline):
 
             for face, frame in zip(face_detections, frames):
                 bbox = face.get("boxes")
-                for box in bbox:
+                for i, box in enumerate(bbox):
                     x1, y1, x2, y2, obj_id, class_id, confidence_score = box
                     x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                     face_crop = frame[y1:y2, x1:x2]
 
                     if face_crop.size == 0:
                         continue
-                    
+
                     existence = self.tracked_data[key].tracked_data.get(obj_id, {})
 
                     temp = {
                         "person_id": int(obj_id),
                         "bbox": [x1, y1, x2, y2],
-                        "landmarks" : face["landmarks"],
+                        "landmarks" : face["landmarks"][i],
                         "face_crop": face_crop,
                         "confidence": float(confidence_score),
                         "tracked_status": True if existence else False,
