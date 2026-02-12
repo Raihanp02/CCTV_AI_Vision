@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from app.services.module_services.tracker_service.base_tracker_service import BaseTrackerService
-from app.services.module_services.tracker_service.tracked_info_service import TrackedInfoService
+from services.module_services.tracker_service.base_tracker_service import BaseTrackerService
+from services.module_services.tracker_service.tracked_info_service import TrackedInfoService
 
 class BaseTrackerPipeline(ABC):
     def __init__(self, cam_id: list[str], tracker_module: type[BaseTrackerService], tracked_data: type[TrackedInfoService]):

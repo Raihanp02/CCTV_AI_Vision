@@ -1,6 +1,6 @@
-from app.services.monitoring_service.cctv_service import CCTVService
+from services.monitoring_service.cctv_service import CCTVService
 from .base_pipeline import BasePipeline
-from app.services.module_services.draw_services import DrawServices
+from services.module_services.draw_services import DrawServices
 from queue import Queue, Empty
 from collections import defaultdict 
 from .executor_strategy import ThreadExecutorStrategy, Base

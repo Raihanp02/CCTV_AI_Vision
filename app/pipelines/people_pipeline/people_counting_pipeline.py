@@ -1,8 +1,8 @@
-from app.services.module_services.detection_service.people_detection_service import PeopleDetectionService
-from app.services.module_services.counting_service.line_counter import LineCounter
-from app.services.module_services.counting_service.line_object import LineObject
+from services.module_services.detection_service.people_detection_service import PeopleDetectionService
+from services.module_services.counting_service.line_counter import LineCounter
+from services.module_services.counting_service.line_object import LineObject
 from libs.tracking.sort_tracker import SortTracker
-from app.pipelines.base_pipeline import BasePipeline
+from pipelines.base_pipeline import BasePipeline
 
 class PeopleCountingPipeline(BasePipeline):
     name="people_counting"

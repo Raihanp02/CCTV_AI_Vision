@@ -1,8 +1,8 @@
 from ..base_pipeline import BasePipeline
 import numpy as np
 from ..utils import merge_for_detection, split_detection_results_columnar
-from app.services.module_services.detection_service.base_detection import BaseDetection
-from app.pipelines.tracker_pipeline.base_tracker import BaseTrackerPipeline 
+from services.module_services.detection_service.base_detection import BaseDetection
+from pipelines.tracker_pipeline.base_tracker import BaseTrackerPipeline 
 from collections import defaultdict
 
 class FacePipeline(BasePipeline):

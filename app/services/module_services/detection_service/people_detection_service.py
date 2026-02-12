@@ -3,7 +3,7 @@ import numpy as np
 import logging
 import cv2
 from sort.tracker import SortTracker
-from app.services.module_services.detection_service.base_detection import BaseDetection
+from services.module_services.detection_service.base_detection import BaseDetection
 
 
 logger = logging.getLogger(__name__)
