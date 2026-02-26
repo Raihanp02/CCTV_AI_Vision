@@ -6,13 +6,13 @@ from core.config import settings
 import threading
 from queue import Queue, Empty
 
-import cv2
-import logging
+from .schema import AIServices
 
 class CCTVService:
-    def __init__(self, camera_url, camera_id, buffer = Queue):
+    def __init__(self, camera_url, camera_id, buffer: Queue, services: AIServices):
         self.buffer = buffer
 
+        self.services = services
         self.camera_url = camera_url
         self.camera_id = camera_id
         self.cap = None
@@ -64,12 +64,13 @@ class CCTVService:
         while self.running:
             ret, frame = self.cap.read()
             if not ret:
-                print("frame read failed")
-                logging.warning("Frame read failed")
+                print(f"{self.camera_id}: frame read failed")
+                logging.warning(f"{self.camera_id}: Frame read failed")
                 continue
             
             self.frame_id += 1
             self.buffer.put({
+                "services": self.services,
                 "camera_id":self.camera_id, 
                 "camera_url": self.camera_url, 
                 "frame_id": self.frame_id, 

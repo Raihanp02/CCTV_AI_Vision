@@ -5,7 +5,7 @@ from collections import defaultdict
 import time
 
 class FacialExpressionPipeline(BasePipeline):
-    name = "facial_expression"
+    name = "EXPRESSION"
     def __init__(self, tracked_data, module, detection_interval = 2.5):
         self.module = module
         self.tracked_data = tracked_data
@@ -18,6 +18,11 @@ class FacialExpressionPipeline(BasePipeline):
         cam_id_list = []
 
         for cam_id, value in face_info.items():
+
+            # check enabled AI services
+            if not getattr(value["services"], FacialExpressionPipeline.name):
+                continue
+            
             detections = value.get("detections")
             facial_info = detections.get("facial_info")
 
