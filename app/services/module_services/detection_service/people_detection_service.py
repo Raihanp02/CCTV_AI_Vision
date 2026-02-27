@@ -1,8 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 import onnxruntime as ort
 import numpy as np
 import logging
 import cv2
-from sort.tracker import SortTracker
+
+from libs.tracking.sort_tracker import SortTracker
 from services.module_services.detection_service.base_detection import BaseDetection
 
 
@@ -84,27 +86,14 @@ class PeopleDetectionService(BaseDetection):
         boxes = np.column_stack((x1, y1, x2, y2, results[:, 4]))
         keep, keep_conf = self._NMS(boxes[:, :4], results[:, -1])
         return keep, keep_conf
-
-    def detect(self, frame):
-        h, w = frame.shape[:2]
-
-        blob = cv2.dnn.blobFromImage(
-            image=frame,
-            scalefactor=1.0 / 255.0,
-            size=(640, 640),
-            swapRB=True,
-            crop=False,
-        )
-
-        results = self.model.run(None, {"images": blob})
-
-        output = results[0][0].T
-        boxes = self._filter_detections(output)
+    
+    def _postprocess(self, results, img_w: int, img_h: int):
+        boxes = self._filter_detections(results)
 
         if boxes.size == 0:
             return np.empty((0, 6))
 
-        rescaled_results, confidences = self._rescale_back(boxes, w, h)
+        rescaled_results, confidences = self._rescale_back(boxes, img_w, img_h)
         num_boxes = min(len(confidences), self.max_boxes)
         valid_count = 0
 
@@ -122,4 +111,36 @@ class PeopleDetectionService(BaseDetection):
             self.boxes[valid_count, 5] = 0.0
             valid_count += 1
 
-        return self.boxes[:valid_count]
+        detections = self.boxes[:valid_count].copy()
+
+        return detections
+
+    def detect(self, frame: np.ndarray | list[np.ndarray]):
+        h, w = frame.shape[:2]
+
+        if isinstance(frame, np.ndarray):
+            frame = [frame]  # Convert to list for batch processing
+
+        blob = cv2.dnn.blobFromImages(
+            frame,
+            scalefactor=1.0 / 255.0,
+            size=(640, 640),
+            swapRB=True,
+            crop=False,
+        )
+
+        # forward pass through the model
+        results = self.model.run(None, {"images": blob})
+
+        # post-process results in parallel for each image in the batch
+        outputs = results[0]
+
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self._postprocess, output.T, w, h)
+                for output in outputs
+            ]
+
+            results = [f.result() for f in futures]
+
+        return {"boxes": results}
