@@ -11,52 +11,66 @@ class FacialExpressionPipeline(BasePipeline):
         self.tracked_data = tracked_data
         self.detection_interval = detection_interval
     
-    def process(self, face_info):
-        face_list = []
-        id_list = []
-        index_list = []
-        cam_id_list = []
+    def process(self, face_infos):
+        faces_to_process = []
 
-        for cam_id, value in face_info.items():
+        for cam_id, value in face_infos.items():
 
-            # check enabled AI services
             if not getattr(value["services"], FacialExpressionPipeline.name):
                 continue
-            
+
             detections = value.get("detections")
             facial_info = detections.get("facial_info")
 
-            for i, info in enumerate(facial_info):
-                face = info.get("face_crop")
-                id = info.get("person_id")
-                expression_status = info.get(FacialExpressionPipeline.name)
+            for frame_index, info in enumerate(facial_info):
+                for order_index, detail in enumerate(info):
 
-                last_seen = self.tracked_data[cam_id].tracked_data.get(id, {}).get("time_seen") if self.tracked_data[cam_id].tracked_data.get(id, {}).get("time_seen") else 0
-                seen_interval = time.monotonic() - last_seen
+                    face = detail.get("face_crop")
+                    person_id = detail.get("person_id")
+                    expression_status = detail.get(FacialExpressionPipeline.name)
 
-                if not expression_status or (seen_interval > self.detection_interval):
-                    face_list.append(face)
-                    id_list.append(id)
-                    index_list.append(i)
-                    cam_id_list.append(cam_id)
-            
-        if face_list:
-            prediction = self.module.detect(face_list)
+                    last_seen = (
+                        self.tracked_data[cam_id].tracked_data
+                        .get(person_id, {})
+                        .get("time_seen", 0)
+                    )
 
-            for index, predict in enumerate(prediction):
-                cam_id = cam_id_list[index]
-                detections = face_info[cam_id].get("detections")
+                    seen_interval = time.monotonic() - last_seen
+
+                    if not expression_status or seen_interval > self.detection_interval:
+                        faces_to_process.append({
+                            "face": face,
+                            "person_id": person_id,
+                            "frame_index": frame_index,
+                            "order_index": order_index,
+                            "cam_id": cam_id
+                        })
+
+        if faces_to_process:
+            faces = [x["face"] for x in faces_to_process]
+            predictions = self.module.detect(faces)
+
+            for data, predict in zip(faces_to_process, predictions):
+                cam_id = data["cam_id"]
+                person_id = data["person_id"]
+                frame_index = data["frame_index"]
+                order_index = data["order_index"]
+
+                detections = face_infos[cam_id].get("detections")
                 facial_info = detections.get("facial_info")
 
-                id = id_list[index]
-                face_info = facial_info[index_list[index]]
+                face_info = facial_info[frame_index][order_index]
                 track_status = face_info.get("tracked_status")
-    
+
                 if predict:
                     if not track_status:
-                        self.tracked_data[cam_id].init_track_info(id)
-                    self.tracked_data[cam_id].update_prediction_info(id, predict, FacialExpressionPipeline.name)
+                        self.tracked_data[cam_id].init_track_info(person_id)
 
+                    self.tracked_data[cam_id].update_prediction_info(
+                        person_id,
+                        predict,
+                        FacialExpressionPipeline.name
+                    )
     
-            
-                    
+                
+                        

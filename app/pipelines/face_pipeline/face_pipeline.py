@@ -40,10 +40,10 @@ class FacePipeline(BasePipeline):
 
             face_detections = detections.get("face_detections")
 
-            temp_results = []
-
+            final_results = []
             for face, frame in zip(face_detections, frames):
                 bbox = face.get("boxes")
+                result_per_frame = []
                 for i, box in enumerate(bbox):
                     x1, y1, x2, y2, obj_id, class_id, confidence_score = box
                     x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
@@ -66,9 +66,11 @@ class FacePipeline(BasePipeline):
                         information = existence.get("predictions", {}).get(name, None)
                         temp[name] = information if information else False
 
-                    temp_results.append(temp)
+                    result_per_frame.append(temp)
 
-                value["detections"]["facial_info"] = temp_results
+                final_results.append(result_per_frame)
+
+                value["detections"]["facial_info"] = final_results
 
     def _generate_face_result(self, face_info):
         result = defaultdict(lambda: {
@@ -81,23 +83,25 @@ class FacePipeline(BasePipeline):
             facial_info = detections.get("facial_info")
 
             for info in facial_info:
-                id = info.get("person_id")
-                bbox = info.get("bbox")
-                confidence = info.get("confidence")
+                result_per_object = []
+                for detail in info:
+                    id = detail.get("person_id")
+                    bbox = detail.get("bbox")
+                    confidence = detail.get("confidence")
 
-                temp = {
-                    "bbox": bbox,
-                    "id": id,
-                    "detections": {}
-                }
+                    temp = {
+                        "bbox": bbox,
+                        "id": id,
+                        "detections": {}
+                    }
 
-                for name in self.module_name:
-                    tracked_data = self.tracked_data[cam_id].get_tracked_info(id)
-                    if tracked_data:
-                        prediction = tracked_data.get("predictions", {}).get(name, "")
-                        if prediction:
-                            temp["detections"][name] = prediction if prediction else None
-
-                result[cam_id][FacePipeline.name].append(temp)
-
+                    for name in self.module_name:
+                        tracked_data = self.tracked_data[cam_id].get_tracked_info(id)
+                        if tracked_data:
+                            prediction = tracked_data.get("predictions", {}).get(name, "")
+                            if prediction:
+                                temp["detections"][name] = prediction if prediction else None
+                    result_per_object.append(temp)
+            
+                result[cam_id][FacePipeline.name].append(result_per_object)
             return result
