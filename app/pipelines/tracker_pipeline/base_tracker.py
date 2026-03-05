@@ -3,7 +3,7 @@ from services.module_services.tracker_service.base_tracker_service import BaseTr
 from services.module_services.tracker_service.tracked_info_service import TrackedInfoService
 
 class BaseTrackerPipeline(ABC):
-    def __init__(self, cam_id: list[str], tracker_module: type[BaseTrackerService], tracked_data: type[TrackedInfoService]):
+    def __init__(self, cam_id: list[str], tracker_module: type[BaseTrackerService], tracked_data: type[TrackedInfoService] = None):
         self.num_camera = len(cam_id)
         self.tracker_modules = {v: k for v, k in zip(cam_id, [tracker_module() for _ in range(self.num_camera)])}
 
