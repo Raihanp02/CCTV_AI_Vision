@@ -32,18 +32,27 @@ class PeopleDetectionService(BaseDetection):
         self.boxes = np.empty((max_boxes, 6), dtype=np.float32)
         self.frame_count = 0
 
-    def _filter_detections(self,results: np.ndarray, thresh: float = 0.25):
+    def _filter_detections(self,results: np.ndarray, thresh: float = 0.25, keep_classes: list[int] = [0]):
         if results.size == 0:
             return np.array([[]])
+        
         if results.shape[1] == 5:
             mask = results[:, 4] > thresh
             return results[mask] if np.any(mask) else np.array([[]])
+        
         # multi-class output
         class_ids = results[:, 4:].argmax(axis=1)
         confidences = results[:, 4:].max(axis=1)
-        keep_mask = confidences > thresh
+
+        # Check if each class_id is in your list, then combine with confidence
+        class_mask = np.isin(class_ids, keep_classes)
+        conf_mask = (confidences > thresh)
+
+        keep_mask = class_mask & conf_mask
+
         if not np.any(keep_mask):
             return np.array([[]])
+        
         filtered = np.column_stack((results[keep_mask, :4], class_ids[keep_mask], confidences[keep_mask]))
         return filtered
 
@@ -116,10 +125,11 @@ class PeopleDetectionService(BaseDetection):
         return detections
 
     def detect(self, frame: np.ndarray | list[np.ndarray]):
-        h, w = frame.shape[:2]
 
         if isinstance(frame, np.ndarray):
             frame = [frame]  # Convert to list for batch processing
+
+        h, w = frame[0].shape[:2]
 
         blob = cv2.dnn.blobFromImages(
             frame,

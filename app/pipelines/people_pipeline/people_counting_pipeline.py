@@ -7,9 +7,10 @@ from pipelines.tracker_pipeline.base_tracker import BaseTrackerPipeline
 from ..utils import merge_for_detection, split_detection_results_columnar
 
 from concurrent.futures import ThreadPoolExecutor
+from collections import defaultdict
 
 class PeopleCountingPipeline(BasePipeline):
-    name="people_counting"
+    name="PEOPLE_COUNTING"
     def __init__(self,
                  tracker_pipeline: BaseTrackerPipeline,  
                  people_detection = PeopleDetectionService(),
@@ -20,25 +21,36 @@ class PeopleCountingPipeline(BasePipeline):
         self.tracker_pipeline = tracker_pipeline
 
     def process(self, frame_info: dict):
-        h, w = frame_info["frame"][0].shape[:2]
+        results = defaultdict(lambda: {
+                PeopleCountingPipeline.name: []
+            })
+        cam_ids = list(frame_info.keys())
+        
+        h, w = frame_info[cam_ids[0]]["frame"][0].shape[:2]
 
         frame, meta = merge_for_detection(frame_info)
         detections = self.people_detection.detect(frame)
 
         split_detection = split_detection_results_columnar(detections, meta, "people_detections")
-        self.tracker_pipeline.process_tracker(split_detection, None)
+        self.tracker_pipeline.process_tracker(split_detection)
 
         with ThreadPoolExecutor() as executor:
             futures = {}
             for cam_id, value in split_detection.items():
-                future = executor.submit(self._count_result, value["detections"]["people_detections"]["boxes"], w, h)
-                futures[future] = cam_id   # keep mapping
-            
-            results = {}
+                people_detections = value["detections"]["people_detections"]
+                print(people_detections)
+                for people in people_detections:
+                    bbox = people.get("boxes", [])
+                    future = executor.submit(self._count_result, bbox, w, h)
+                    futures[future] = cam_id   # keep mapping
 
             for future, cam_id in futures.items():
                 result = future.result()
-                results.setdefault(cam_id, []).append(result)
+                results[cam_id][PeopleCountingPipeline.name].append(result)
+        
+        #print(results)
+
+        return results
                 
     def get_current_total(self):
         return self.counter.going_in - self.counter.going_out
@@ -56,10 +68,9 @@ class PeopleCountingPipeline(BasePipeline):
                 data[6],
             )
 
-            status = self.counter.single_crossing_line(boxes, w, h)
+            status = self.counter.single_crossing_line(data, w, h)
 
             result.append({
-                "detection_type": self.name,
                 "bbox": [x1,y1,x2,y2],
                 "id": class_id,
                 "type": status if status else None,

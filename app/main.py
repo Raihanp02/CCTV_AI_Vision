@@ -11,7 +11,7 @@ buffer = Queue(maxsize=4)
 cam_1 = CCTVService(camera_url=0, 
                     camera_id="cam_1", 
                     buffer=buffer, 
-                    services=AIServices(EXPRESSION=True))
+                    services=AIServices(PEOPLE_COUNTING=True))
 
 vision_pipeline = PipelineFactory.create_vision_pipeline(source=[cam_1])
 

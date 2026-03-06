@@ -12,7 +12,7 @@ class DrawServices:
                     for result in result_per_frame:
                         x1,y1,x2,y2 = result["bbox"]
                         label = ""
-                        for result_label in result.get("detections").values():
+                        for result_label in result.get("detections", {}).values():
                             label += f"{result_label.get('label','')}, "
 
                         self.draw_bbox(frame, {
