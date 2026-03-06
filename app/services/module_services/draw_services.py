@@ -7,7 +7,6 @@ class DrawServices:
 
     def process(self, frame_info):
         for key, info in frame_info.items():
-            print(list(zip(*info["result"].values())))
             for frame, results in zip(info["frame"], zip(*info["result"].values())):
                 for result_per_frame in results:
                     for result in result_per_frame:
