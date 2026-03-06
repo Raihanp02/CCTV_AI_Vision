@@ -21,16 +21,16 @@ class PipelineFactory:
     def create_pipeline(cctvs: list[CCTVService]):
         pipelines = []
         
-        dict_services = {"face_pipeline": {}, "people_counting": None}
+        dict_services = {"face": {}, "people_counting": None}
         
         for cctv in cctvs:
             if cctv.services.EXPRESSION:
-                dict_services["face_pipeline"] = {"expression": True}
+                dict_services["face"]["expression"] = True
             if cctv.services.PEOPLE_COUNTING:
                 dict_services["people_counting"] = True
 
-        if dict_services["face_pipeline"]:
-            pipelines.append(PipelineFactory.create_face_pipeline(dict_services["face_pipeline"], cctvs))
+        if dict_services["face"]:
+            pipelines.append(PipelineFactory.create_face_pipeline(dict_services["face"], cctvs))
     
         if dict_services["people_counting"] == True:
             pipelines.append(PipelineFactory.create_people_counting_pipeline(cctvs))
