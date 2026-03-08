@@ -1,6 +1,6 @@
 from .faiss_db import FAISSDB
-from .face_embedding_service import FaceEmbeddingService
-from ..detection_service.face_detection_service import FaceDetectionService
+from ...face_embedding_service import FaceEmbeddingService
+from ....detection_service.face_detection_service import FaceDetectionService
 from pathlib import Path
 import cv2
 

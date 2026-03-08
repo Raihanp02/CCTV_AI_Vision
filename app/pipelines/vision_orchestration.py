@@ -82,11 +82,14 @@ class VisionPipeline:
         grouped = defaultdict(lambda: {
             "frame": [],
             "frame_id": [],
-            "result": {}
+            "result": {},
+            "services": None
         })
 
         for item in frame_info_list:
             cam_id = item["camera_id"]
+            if grouped[cam_id]["services"] == None:
+                grouped[cam_id]["services"] = item["services"]
             grouped[cam_id]["frame"].append(item["frame"])
             grouped[cam_id]["frame_id"].append(item["frame_id"])
 
