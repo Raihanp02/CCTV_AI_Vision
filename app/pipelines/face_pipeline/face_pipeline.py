@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from ..base_pipeline import BasePipeline
 import numpy as np
 from ..utils import merge_for_detection, split_detection_results_columnar
@@ -25,10 +27,9 @@ class FacePipeline(BasePipeline):
         split_detection = split_detection_results_columnar(detections, meta, "face_detections")
         self.tracker_pipeline.process_tracker(split_detection)
 
-        for feature in self.features:
-            name = feature.name
-            self._preprocess(split_detection)
-            feature.process(split_detection)
+        self._preprocess(split_detection)
+        with ThreadPoolExecutor() as executor:
+            executor.map(lambda f: f.process(split_detection), self.features)
 
         face_result = self._generate_face_result(split_detection)
         return face_result
