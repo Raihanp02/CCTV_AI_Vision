@@ -38,7 +38,6 @@ class PeopleCountingPipeline(BasePipeline):
             futures = {}
             for cam_id, value in split_detection.items():
                 people_detections = value["detections"]["people_detections"]
-                print(people_detections)
                 for people in people_detections:
                     bbox = people.get("boxes", [])
                     future = executor.submit(self._count_result, bbox, w, h)
@@ -47,8 +46,6 @@ class PeopleCountingPipeline(BasePipeline):
             for future, cam_id in futures.items():
                 result = future.result()
                 results[cam_id][PeopleCountingPipeline.name].append(result)
-        
-        #print(results)
 
         return results
                 

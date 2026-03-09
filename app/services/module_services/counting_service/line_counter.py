@@ -1,4 +1,5 @@
 from .line_object import LineObject
+import threading
 
 class LineCounter:
     def __init__(self, lines: LineObject):
@@ -7,6 +8,7 @@ class LineCounter:
         self.going_in = 0
         self.going_out = 0
         self.lines = lines
+        self.lock = threading.Lock()
 
     def batch_crossing_line(self, tracked_objects, w, h):
         results = []            
@@ -67,10 +69,6 @@ class LineCounter:
         cx, cy = (bx1 + bx2) // 2, (by1 + by2) // 2
         curr_centroid = [cx, cy]
 
-        self._safe_insert_limited(
-            self.prev_centroids, obj_id, curr_centroid, max_size=100
-        )
-
         status = None
         if obj_id in self.prev_centroids:
             for line in self.lines:
@@ -81,20 +79,37 @@ class LineCounter:
 
                 status = self._crossing_direction(side_prev, side_curr, line)
                 if status:
-                    return status
+                    break
+
+        self._safe_insert_limited(
+            self.prev_centroids, obj_id, curr_centroid, max_size=100
+        )
+
+        return status
         
     def _crossing_direction(self, side_prev, side_curr, line) -> str | None:
-        if side_prev * side_curr >= 0:
-            return None
 
         forward = side_prev <= 0 and side_curr > 0
+        backward = side_prev > 0 and side_curr <= 0
 
         if line.direction_left_to_right:
-            self.going_in += 1
-            return "in" if forward else "out"
+            if forward:
+                self.going_in += 1
+                return "in"
+            elif backward:
+                self.going_out += 1
+                return "out"
+            else:
+                return None
         else:
-            self.going_out += 1
-            return "out" if forward else "in"
+            if forward:
+                self.going_out += 1
+                return "out"
+            elif backward:
+                self.going_in += 1
+                return "in"
+            else:
+                return None
 
     def _side(self, p, limits):
         """
@@ -105,6 +120,7 @@ class LineCounter:
         return (x2 - x1) * (p[1] - y1) - (y2 - y1) * (p[0] - x1)
 
     def _safe_insert_limited(self, d, key, value, max_size):
-        if key not in d and len(d) >= max_size:
-            d.pop(next(iter(d)))
-        d[key] = value
+        with self.lock:
+            if key not in d and len(d) >= max_size:
+                d.pop(next(iter(d)))
+            d[key] = value
