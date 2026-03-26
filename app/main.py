@@ -6,12 +6,12 @@ from inference_gateway.cv2_testing.stream import StreamVideo
 
 from queue import Queue
 
-buffer = Queue(maxsize=4)
+buffer = Queue(maxsize=1)
 
 cam_1 = CCTVService(camera_url=0, 
                     camera_id="cam_1", 
                     buffer=buffer, 
-                    services=AIServices(PEOPLE_COUNTING=True))
+                    services=AIServices(GENDER=True, EXPRESSION=True))
 
 vision_pipeline = PipelineFactory.create_vision_pipeline(source=[cam_1])
 

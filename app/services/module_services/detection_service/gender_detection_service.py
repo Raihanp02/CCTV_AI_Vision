@@ -10,33 +10,23 @@ from services.module_services.detection_service.base_detection import BaseDetect
 
 logger = logging.getLogger(__name__)
 
-HSEMOTION_EMOTIONS = {
-    0: "Angry",
-    1: "Disgust",
-    2: "Fear",
-    3: "Happy",
-    4: "Neutral",
-    5: "Sad",
-    6: "Surprise",
-}
-
-STANDARD_EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Neutral", "Sad", "Surprise"]
+GENDER_LABELS = ["Male", "Female"]
 
 
-class FacialExpressionService(BaseDetection):
+class GenderDetectionService(BaseDetection):
     def __init__(
         self,
         model_path: Optional[str] = None,
         device: str = "auto",
         img_size: int = 260,
-        mean: list[float] = [0.485, 0.456, 0.406],
-        std: list[float] = [0.229, 0.224, 0.225],
+        mean: list[float] = [131.0912 / 255, 103.8827 / 255, 91.4953 / 255],
+        std: list[float] | None = None,
     ):
         """
-        Initialize Facial Expression Recognizer with ONNX.
+        Initialize Gender Detection Service with ONNX.
 
         Args:
-            model_path: Path to ONNX model (default: models/emotion.onnx)
+            model_path: Path to ONNX model (default: models/gender.onnx)
             device: Device to use ('cuda', 'cpu', or 'auto')
             viewing_session_uuid: Optional viewing session UUID
         """
@@ -47,14 +37,14 @@ class FacialExpressionService(BaseDetection):
 
         if model_path is None:
             base_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
-            model_path = base_dir / "assets/models" / "emotion.onnx"
+            model_path = base_dir / "assets/models" / "gender.onnx"
 
         self.model_path = model_path
         self.ort_session = ort.InferenceSession(
                 self.model_path
             )
 
-    def detect(self, frame: list[np.ndarray], threshold: float = 0.4) -> Dict[str, Any]:
+    def detect(self, frame: list[np.ndarray], threshold: float = 0.6) -> Dict[str, Any]:
         input_tensor = self._preprocess(frame)
 
         scores = self.ort_session.run(None, {"input": input_tensor})[0]
@@ -62,7 +52,7 @@ class FacialExpressionService(BaseDetection):
         result = []
         for score in scores:
             dominant_idx = np.argmax(score)
-            dominant_emotion = HSEMOTION_EMOTIONS[dominant_idx]
+            dominant_emotion = GENDER_LABELS[dominant_idx]
 
             exp_score = np.exp(score - np.max(score))
             probabilities = exp_score / exp_score.sum()
@@ -93,10 +83,11 @@ class FacialExpressionService(BaseDetection):
             mean=self.mean,          # subtract mean
             swapRB=True,        # BGR -> RGB
             crop=False
-        ).astype(np.float32)
+        )
 
         # Divide by std (broadcasted)
-        for c in range(3):
-            blob[:, c, :, :] /= self.std[c]
+        if self.std:
+            for c in range(3):
+                blob[:, c, :, :] /= self.std[c]
 
         return blob
