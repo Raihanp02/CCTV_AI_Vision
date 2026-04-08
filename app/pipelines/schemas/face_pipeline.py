@@ -1,8 +1,9 @@
-from typing import TypedDict, NotRequired
+from typing import TypedDict
+from typing_extensions import NotRequired
 import numpy as np
 
-from ...services.monitoring_service.schema import AIServices
-from ...services.module_services.tracker_service.schema import Predictions
+from services.monitoring_service.schema import AIServices
+from services.module_services.tracker_service.schema import Predictions
 
 class FaceDetection(TypedDict):
     boxes: np.ndarray

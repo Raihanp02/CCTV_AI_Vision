@@ -1,7 +1,8 @@
-from typing import TypedDict, NotRequired, Literal
+from typing import TypedDict, Literal
+from typing_extensions import NotRequired
 import numpy as np
 
-from ...services.monitoring_service.schema import AIServices
+from services.monitoring_service.schema import AIServices
 
 class PeopleDetection(TypedDict):
     boxes: np.ndarray

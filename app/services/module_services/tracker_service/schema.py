@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, Optional
-from typing import TypedDict, NotRequired
+from pydantic import BaseModel, Field
+from typing import TypedDict
+from typing_extensions import NotRequired
 
 """
 example:

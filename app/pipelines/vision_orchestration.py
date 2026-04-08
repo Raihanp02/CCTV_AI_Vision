@@ -4,8 +4,8 @@ from services.module_services.draw_services import DrawServices
 from queue import Queue, Empty
 from collections import defaultdict 
 from .executor_strategy import ThreadExecutorStrategy, Base
-from ..services.monitoring_service.schema import CCTVDict, AIServices
-from .schemas.orchestration import StructuredInfo, PipelinesResults
+from services.monitoring_service.schema import CCTVDict, AIServices
+from pipelines.schemas.orchestration import StructuredInfo, PipelinesResults
 
 import threading
 import traceback

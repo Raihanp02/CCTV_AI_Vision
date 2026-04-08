@@ -5,9 +5,9 @@ import numpy as np
 from ..utils import merge_for_detection, split_detection_results_columnar
 from services.module_services.detection_service.base_detection import BaseDetection
 from pipelines.tracker_pipeline.base_tracker import BaseTrackerPipeline 
-from ..schemas.orchestration import StructuredInfo
-from ..schemas.face_pipeline import DetectionResults, SplitDetectionFace, FaceResults, FacePipelineResults
-from ...services.module_services.detection_service.schemas.face import FaceDetectResult
+from pipelines.schemas.orchestration import StructuredInfo
+from pipelines.schemas.face_pipeline import DetectionResults, SplitDetectionFace, FaceResults, FacePipelineResults
+from services.module_services.detection_service.schemas.face import FaceDetectResult
 
 from collections import defaultdict
 

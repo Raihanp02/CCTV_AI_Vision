@@ -1,8 +1,8 @@
 from typing import TypedDict
 import numpy as np
-from ...services.monitoring_service.schema import AIServices
-from .face_pipeline import FacePipelineResults
-from .people_pipeline import PeoplePipelineResults
+from services.monitoring_service.schema import AIServices
+from pipelines.schemas.face_pipeline import FacePipelineResults
+from pipelines.schemas.people_pipeline import PeoplePipelineResults
 
 class StructuredInfo(TypedDict):
     frame: list[np.ndarray]

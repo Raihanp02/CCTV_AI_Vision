@@ -5,9 +5,9 @@ from libs.tracking.sort_tracker import SortTracker
 from pipelines.base_pipeline import BasePipeline
 from pipelines.tracker_pipeline.base_tracker import BaseTrackerPipeline 
 from ..utils import merge_for_detection, split_detection_results_columnar
-from ..schemas.orchestration import StructuredInfo
-from ..schemas.people_pipeline import DetectionResults, SplitDetectionPeople, PeopleCountingResult, PeoplePipelineResults
-from ...services.module_services.detection_service.schemas.people import PeopleDetectResult
+from pipelines.schemas.orchestration import StructuredInfo
+from pipelines.schemas.people_pipeline import DetectionResults, SplitDetectionPeople, PeopleCountingResult, PeoplePipelineResults
+from services.module_services.detection_service.schemas.people import PeopleDetectResult
 
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
