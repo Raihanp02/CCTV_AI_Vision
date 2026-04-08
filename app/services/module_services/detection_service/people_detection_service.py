@@ -6,6 +6,7 @@ import cv2
 
 from libs.tracking.sort_tracker import SortTracker
 from services.module_services.detection_service.base_detection import BaseDetection
+from .schemas.people import PeopleDetectResult
 
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,7 @@ class PeopleDetectionService(BaseDetection):
 
         return detections
 
-    def detect(self, frame: np.ndarray | list[np.ndarray]):
+    def detect(self, frame: np.ndarray | list[np.ndarray]) -> PeopleDetectResult:
 
         if isinstance(frame, np.ndarray):
             frame = [frame]  # Convert to list for batch processing

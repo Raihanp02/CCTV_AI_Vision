@@ -5,6 +5,9 @@ from libs.tracking.sort_tracker import SortTracker
 from pipelines.base_pipeline import BasePipeline
 from pipelines.tracker_pipeline.base_tracker import BaseTrackerPipeline 
 from ..utils import merge_for_detection, split_detection_results_columnar
+from ..schemas.orchestration import StructuredInfo
+from ..schemas.people_pipeline import DetectionResults, SplitDetectionPeople, PeopleCountingResult, PeoplePipelineResults
+from ...services.module_services.detection_service.schemas.people import PeopleDetectResult
 
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
@@ -20,7 +23,7 @@ class PeopleCountingPipeline(BasePipeline):
         self.counter = counter
         self.tracker_pipeline = tracker_pipeline
 
-    def process(self, frame_info: dict):
+    def process(self, frame_info: dict[str, StructuredInfo]) -> dict[str, PeoplePipelineResults]:
         results = defaultdict(lambda: {
                 PeopleCountingPipeline.name: []
             })
@@ -29,14 +32,14 @@ class PeopleCountingPipeline(BasePipeline):
         h, w = frame_info[cam_ids[0]]["frame"][0].shape[:2]
 
         frame, meta = merge_for_detection(frame_info)
-        detections = self.people_detection.detect(frame)
+        detections: PeopleDetectResult = self.people_detection.detect(frame)
 
-        split_detection = split_detection_results_columnar(detections, meta, "people_detections")
-        self.tracker_pipeline.process_tracker(split_detection)
+        split_detection: SplitDetectionPeople = split_detection_results_columnar(detections, meta, "people_detections")
+        tracker_results: SplitDetectionPeople = self.tracker_pipeline.process_tracker(split_detection)
 
         with ThreadPoolExecutor() as executor:
             futures = {}
-            for cam_id, value in split_detection.items():
+            for cam_id, value in tracker_results.items():
                 people_detections = value["detections"]["people_detections"]
                 for people in people_detections:
                     bbox = people.get("boxes", [])
@@ -52,7 +55,7 @@ class PeopleCountingPipeline(BasePipeline):
     def get_current_total(self):
         return self.counter.going_in - self.counter.going_out
     
-    def _count_result(self, boxes, w, h):
+    def _count_result(self, boxes, w, h) ->list[PeopleCountingResult]:
         result = []
         for data in boxes:
             x1, y1, x2, y2, obj_id, class_id, confidence_score = (

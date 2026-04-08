@@ -1,5 +1,6 @@
 from .line_object import LineObject
 import threading
+from typing import Literal
 
 class LineCounter:
     def __init__(self, lines: LineObject):
@@ -55,7 +56,7 @@ class LineCounter:
 
         return results
     
-    def single_crossing_line(self, tracked_object, w, h):
+    def single_crossing_line(self, tracked_object, w, h) -> Literal["in", "out", None]:
         bx1, by1, bx2, by2, obj_id, class_id, confidence_score = (
                 int(tracked_object[0]),
                 int(tracked_object[1]),
@@ -87,7 +88,7 @@ class LineCounter:
 
         return status
         
-    def _crossing_direction(self, side_prev, side_curr, line) -> str | None:
+    def _crossing_direction(self, side_prev, side_curr, line) -> Literal["in", "out", None]:
 
         forward = side_prev <= 0 and side_curr > 0
         backward = side_prev > 0 and side_curr <= 0

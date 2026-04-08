@@ -54,7 +54,7 @@ class FacialExpressionService(BaseDetection):
                 self.model_path
             )
 
-    def detect(self, frame: list[np.ndarray], threshold: float = 0.4) -> Dict[str, Any]:
+    def detect(self, frame: list[np.ndarray], threshold: float = 0.4) -> list[Dict[str, Any]]:
         input_tensor = self._preprocess(frame)
 
         scores = self.ort_session.run(None, {"input": input_tensor})[0]

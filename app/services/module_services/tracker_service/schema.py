@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, Field, Optional
-from typing import List, Dict
+from typing import TypedDict, NotRequired
 
 """
 example:
@@ -16,14 +16,14 @@ example:
 }
 """
 
-class PredictionItem(BaseModel):
+class PredictionItem(TypedDict):
     label: str
     confidence: float
 
-class Predictions(BaseModel):
-    gender: Optional[PredictionItem] = None
-    facial_expression: Optional[PredictionItem] = None
+class Predictions(TypedDict):
+    gender: NotRequired[PredictionItem]
+    facial_expression: NotRequired[PredictionItem]
 
-class TrackedDataSchema(BaseModel):
-    tracked_id: int = Field(..., description="Unique identifier for the tracked data")
+class TrackedDataSchema(TypedDict):
+    tracked_id: int
     predictions: Predictions

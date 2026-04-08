@@ -5,7 +5,12 @@ import numpy as np
 from ..utils import merge_for_detection, split_detection_results_columnar
 from services.module_services.detection_service.base_detection import BaseDetection
 from pipelines.tracker_pipeline.base_tracker import BaseTrackerPipeline 
+from ..schemas.orchestration import StructuredInfo
+from ..schemas.face_pipeline import DetectionResults, SplitDetectionFace, FaceResults, FacePipelineResults
+from ...services.module_services.detection_service.schemas.face import FaceDetectResult
+
 from collections import defaultdict
+
 
 class FacePipeline(BasePipeline):
     name = "face_pipeline"
@@ -20,21 +25,21 @@ class FacePipeline(BasePipeline):
 
         self.module_name = [feature.name for feature in features]
         
-    def process(self, frame_info: dict):
+    def process(self, frame_info: dict[str, StructuredInfo]) -> FacePipelineResults:
         frame, meta = merge_for_detection(frame_info)
-        detections = self.face_detection.detect(frame)
+        detections: FaceDetectResult = self.face_detection.detect(frame)
 
-        split_detection = split_detection_results_columnar(detections, meta, "face_detections")
-        self.tracker_pipeline.process_tracker(split_detection)
+        split_detection: SplitDetectionFace = split_detection_results_columnar(detections, meta, "face_detections")
+        tracker_result: SplitDetectionFace = self.tracker_pipeline.process_tracker(split_detection)
 
-        self._preprocess(split_detection)
+        preprocessed_data: SplitDetectionFace = self._preprocess(tracker_result)
         with ThreadPoolExecutor() as executor:
-            executor.map(lambda f: f.process(split_detection), self.features)
+            executor.map(lambda f: f.process(preprocessed_data), self.features)
 
-        face_result = self._generate_face_result(split_detection)
+        face_result: FacePipelineResults = self._generate_face_result(preprocessed_data)
         return face_result
     
-    def _preprocess(self, info):
+    def _preprocess(self, info: SplitDetectionFace) -> SplitDetectionFace:
         for key, value in info.items():
             frames = value.get("frame")
             detections = value["detections"]
@@ -73,7 +78,9 @@ class FacePipeline(BasePipeline):
 
                 value["detections"]["facial_info"] = final_results
 
-    def _generate_face_result(self, face_info):
+        return info
+
+    def _generate_face_result(self, face_info: SplitDetectionFace) -> dict[str, FacePipelineResults]:
         result = defaultdict(lambda: {
                 FacePipeline.name: []
             })

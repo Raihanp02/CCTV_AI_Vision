@@ -3,7 +3,9 @@ import onnxruntime as ort
 from typing import Tuple
 import cv2
 import logging
+
 from services.module_services.detection_service.base_detection import BaseDetection
+from .schemas.face import FaceDetectResult
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +14,7 @@ class FaceDetectionService(BaseDetection):
         self.face_detection = RetinaFaceDecoder(model_path="assets/models/det_10g.onnx")
         providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 
-    def detect(self, frames: list[np.ndarray], min_area: float = 0.03) -> list[dict[str, list[np.ndarray]]]:
+    def detect(self, frames: list[np.ndarray], min_area: float = 0.03) -> FaceDetectResult:
         temp_boxes = []
         temp_landmarks = []
         temp_scores = []

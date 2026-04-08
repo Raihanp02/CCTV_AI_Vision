@@ -6,11 +6,11 @@ from core.config import settings
 import threading
 from queue import Queue, Empty
 
-from .schema import AIServices
+from .schema import AIServices, CCTVDict
 
 class CCTVService:
     def __init__(self, camera_url, camera_id, buffer: Queue, services: AIServices):
-        self.buffer = buffer
+        self.buffer: Queue[CCTVDict] = buffer
 
         self.services = services
         self.camera_url = camera_url

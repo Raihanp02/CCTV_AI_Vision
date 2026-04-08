@@ -22,3 +22,5 @@ class FaceTrackerPipeline(BaseTrackerPipeline):
                     "scores": result["scores"]
                 })
             value["detections"]["face_detections"] = temp_detection
+        
+        return info

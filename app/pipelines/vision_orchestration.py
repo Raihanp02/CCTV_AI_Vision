@@ -4,6 +4,8 @@ from services.module_services.draw_services import DrawServices
 from queue import Queue, Empty
 from collections import defaultdict 
 from .executor_strategy import ThreadExecutorStrategy, Base
+from ..services.monitoring_service.schema import CCTVDict, AIServices
+from .schemas.orchestration import StructuredInfo, PipelinesResults
 
 import threading
 import traceback
@@ -24,7 +26,7 @@ class VisionPipeline:
         self.executor_strategy = executor_strategy
 
         # frame information buffer
-        self.frame_buffer = self.source[0].buffer
+        self.frame_buffer: Queue[CCTVDict] = self.source[0].buffer
         self.batch_size = self.source[0].buffer.maxsize
         self.vision_buffer = Queue(maxsize=self.batch_size)
 
@@ -48,21 +50,21 @@ class VisionPipeline:
         try:
             while self.running:
                 if self.frame_buffer.qsize() >= self.batch_size:
-                    frame_info = self._drain_queue(self.frame_buffer)
+                    frame_info: Queue[CCTVDict] = self._drain_queue(self.frame_buffer)
 
                     if frame_info:
-                        frame_info = self._restructure_frame(frame_info)
+                        frame_info: dict[str, StructuredInfo] = self._restructure_frame(frame_info)
                         
-                        results = self.executor_strategy.execute(self.pipelines, frame_info)
+                        results: PipelinesResults = self.executor_strategy.execute(self.pipelines, frame_info)
 
                         #merge results back to frame_info
-                        self._merge_results(frame_info, results)
+                        merged_results = self._merge_results(frame_info, results)
 
                         # draw results
-                        self.draw_service.process(frame_info)
+                        self.draw_service.process(merged_results)
 
                         # push to vision buffer
-                        self.vision_buffer.put(frame_info)
+                        self.vision_buffer.put(merged_results)
 
         except Exception as e:
             print("❌ VisionPipeline thread crashed:")
@@ -95,7 +97,9 @@ class VisionPipeline:
 
         return grouped
 
-    def _merge_results(self, frame_info, results):
+    def _merge_results(self, frame_info: dict[str, StructuredInfo], results: PipelinesResults) -> dict[str, StructuredInfo]:
         for items in results:
             for cam_id, value in items.items():
                 frame_info[cam_id]["result"].update(value)
+
+        return frame_info

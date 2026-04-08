@@ -1,6 +1,8 @@
 from collections import defaultdict
+import numpy as np
+from .schemas.orchestration import StructuredInfo
 
-def merge_for_detection(by_camera):
+def merge_for_detection(by_camera: dict[str, StructuredInfo]) -> tuple[list[np.ndarray], list]:
     frames = []
     meta = []  # mapping back to camera & frame_id
 

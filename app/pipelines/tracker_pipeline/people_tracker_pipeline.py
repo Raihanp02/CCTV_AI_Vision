@@ -19,3 +19,5 @@ class PeopleTrackerPipeline(BaseTrackerPipeline):
                     "boxes": result["boxes"],
                 })
             value["detections"]["people_detections"] = temp_detection
+
+        return info
