@@ -6,8 +6,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import delete, select
 from typing import Type
 
-from aqi_attendance.src.core.database import session
-
 class PGCrud:
     # ---------- CREATE ----------
     def add_embedding(self, session, embedding: list[float] | np.ndarray, image_path: str, person_id: int, created_by_id: int = None) -> PersonFace:
