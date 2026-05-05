@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
+    DATABASE_ASYNC_URL: str
+    DATABASE_SYNC_URL: str
     CAMERA_MONITORING_SOURCES: list[str | int] = []
     CAMERA_MONITORING_FRAME_WIDTH: int = 1280
     CAMERA_MONITORING_FRAME_HEIGHT: int = 720
