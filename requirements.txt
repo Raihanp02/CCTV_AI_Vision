@@ -5,3 +5,8 @@ pydantic-settings
 filterpy
 faiss-cpu
 ultralight
+sqlalchemy
+pgvector
+sqlalchemy-mixins
+alembic
+psycopg2

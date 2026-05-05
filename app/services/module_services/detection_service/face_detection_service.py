@@ -3,18 +3,27 @@ import onnxruntime as ort
 from typing import Tuple
 import cv2
 import logging
-
-from services.module_services.detection_service.base_detection import BaseDetection
-from .schemas.face import FaceDetectResult
+from pathlib import Path
+import requests
+import gdown
 
 logger = logging.getLogger(__name__)
 
-class FaceDetectionService(BaseDetection):
-    def __init__(self):
-        self.face_detection = RetinaFaceDecoder(model_path="assets/models/det_10g.onnx")
+class FaceDetectionService():
+    def __init__(self, path=".models/scrfd_500m_bnkps_shape320x320.onnx"):
+        try:
+            self.face_detection = SCRFDDecoder(model_path=path)
+        except Exception as e:
+            if Path(path).name == "scrfd_500m_bnkps_shape320x320.onnx":
+                download_from_gdrive("1z6vNMivXh-rciF8ufyeXIZPllEcG5saT", path)
+                self.face_detection = SCRFDDecoder(model_path=path)
+
+            else:
+                raise Exception("Face detection model not found")
+            
         providers = ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 
-    def detect(self, frames: list[np.ndarray], min_area: float = 0.03) -> FaceDetectResult:
+    def detect(self, frames: list[np.ndarray], min_area: float = 0.005) -> list[dict[str, list[np.ndarray]]]:
         temp_boxes = []
         temp_landmarks = []
         temp_scores = []
@@ -64,25 +73,9 @@ class FaceDetectionService(BaseDetection):
             if similarity > 0.8:
                 return i
         return None
-    
-    def get_face_embedding(self, frame):
-        blob = cv2.dnn.blobFromImage(
-            image=frame,
-            scalefactor=1.0/255,
-            size = (160,160),  # normalize 0-1
-            mean=(131.0912/255, 103.8827/255, 91.4953/255),# target size
-            swapRB=True,           # RGB <-> BGR, not needed for grayscale
-            crop=False
-        )
-        results = self.face_embed_model.run(None, {"input":blob})
 
-        return results[0][0]
-    
-    def _cosine_similarity(self,a,b):
-        return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
-class RetinaFaceDecoder:
-    def __init__(self, model_path: str, input_size: Tuple[int, int] = (640, 640)):
+class SCRFDDecoder:
+    def __init__(self, model_path: str, input_size: Tuple[int, int] = (320, 320), expected_counts = [3200,800,200]):
         """
         Initialize RetinaFace decoder
         
@@ -98,6 +91,7 @@ class RetinaFaceDecoder:
         self.strides = [8, 16, 32]
         
         # Generate anchors for each scale
+        self.expected_counts = expected_counts
         self.anchors = self._generate_anchors()
         
         # Debug: Print anchor counts
@@ -105,7 +99,7 @@ class RetinaFaceDecoder:
     def _generate_anchors(self):
         """Generate anchor points for all feature pyramid levels"""
         # Expected anchor counts from model architecture
-        expected_counts = [12800, 3200, 800]
+        expected_counts = self.expected_counts
         anchors_list = []
         
         for stride, expected_count in zip(self.strides, expected_counts):
@@ -261,9 +255,9 @@ class RetinaFaceDecoder:
         all_scores = []
         
         for i, stride in enumerate(self.strides):
-            scores = outputs[i].squeeze()  # [N, 1] -> [N]
-            boxes = outputs[i + 3]  # [N, 4]
-            landmarks = outputs[i + 6]  # [N, 10]
+            scores = squeeze_batch(outputs[i]).squeeze()  # [N, 1] -> [N]
+            boxes = squeeze_batch(outputs[i + 3])  # [N, 4]
+            landmarks = squeeze_batch(outputs[i + 6])  # [N, 10]
             anchors = self.anchors[i]
             
             # Filter by confidence
@@ -429,3 +423,13 @@ def _check_face_alignment(landmarks: np.ndarray, box: np.ndarray,
             return False
         
         return True
+
+def squeeze_batch(x):
+    if x.shape[0] == 1:
+        return x[0]   # faster than np.squeeze
+    return x
+
+def download_from_gdrive(file_id, output_path):
+    """download from google drive"""
+    url = f"https://drive.google.com/uc?id={file_id}"
+    gdown.download(url, output_path, quiet=False)
